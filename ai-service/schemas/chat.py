@@ -12,4 +12,4 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     tools_called: list[str] = Field(default_factory=list)
-
+    intent: str | None = None

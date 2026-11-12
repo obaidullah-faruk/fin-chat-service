@@ -2,13 +2,25 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
+from sqlmodel import select
 
-from main import app
-from mcp_client import call_mcp_tool
+from agents.coordinator import CoordinatorResult, LLMCallTelemetry, TraceTelemetry
+from db.models import AgentRun, AgentTrace, LLMCall, ToolCall
+from db.repository import AIRepository
+from db.session import create_db_engine, create_session_factory, init_db
+from main import app, get_ai_repository
+from mcp_client import ToolCallTelemetry, call_mcp_tool
 
 client = TestClient(app)
+
+
+async def _make_test_db():
+    engine = create_db_engine("sqlite+aiosqlite:///:memory:")
+    await init_db(engine)
+    session_factory = create_session_factory(engine)
+    return engine, session_factory, AIRepository(session_factory=session_factory)
 
 
 def test_health_check():
@@ -38,108 +50,143 @@ def test_process_chat_requires_valid_internal_key(monkeypatch):
     assert wrong_key_resp.status_code == 403
 
 
-def test_process_chat_calls_get_balance_via_mcp(monkeypatch):
+def test_process_chat_runs_coordinator_and_logs_to_ai_db(monkeypatch):
     monkeypatch.setenv("INTERNAL_API_KEY", "test-internal-key")
-    payload = {
-        "user_id": 4,
-        "role": "customer",
-        "account_number": "FC1000000001",
-        "session_id": 10,
-        "message": "What is my balance?",
-    }
+    engine, session_factory, repo = asyncio.run(_make_test_db())
+    app.dependency_overrides[get_ai_repository] = lambda: repo
 
-    mock_balance = {
-        "account_number": "FC1000000001",
-        "account_type": "savings",
-        "balance": "10000.00",
-        "currency": "USD",
-        "is_active": True,
-    }
+    async def fake_get_user_mcp_tools(*, user_id: int, telemetry_records=None, **_kwargs):
+        assert user_id == 4
+        if telemetry_records is not None:
+            telemetry_records.append(
+                ToolCallTelemetry(
+                    tool_name="get_balance",
+                    mcp_server="accounts",
+                    input_json={"user_id": 4},
+                    output_json={"account_number": "FC1000000001", "balance": "10000.00"},
+                    latency_ms=42,
+                    success=True,
+                )
+            )
+        return []
 
-    with patch("main.call_mcp_tool", new=AsyncMock(return_value=mock_balance)) as mock_call:
-        response = client.post(
-            "/chat/process",
-            json=payload,
-            headers={"X-Internal-Key": "test-internal-key"},
-        )
+    coordinator_result = CoordinatorResult(
+        reply="Your savings account FC1000000001 has a balance of USD 10,000.00.",
+        intent="accounts",
+        confidence=0.99,
+        reason="User asked for their balance.",
+        tools_called=["get_balance"],
+        llm_calls=[
+            LLMCallTelemetry("classify_intent", "gemini-3.8-flash", 150, 40, 210),
+            LLMCallTelemetry("coordinator_agent", "gemini-3.8-flash", 400, 60, 180),
+        ],
+        traces=[
+            TraceTelemetry("classify_intent", {"message": "What is my balance?"}, {"intent": "accounts"}),
+            TraceTelemetry("finalize_reply", {"tools_called": ["get_balance"]}, {"reply_length": 65}),
+        ],
+    )
 
-    assert response.status_code == 200
-    data = response.json()
-    assert data["tools_called"] == ["get_balance"]
-    assert "FC1000000001" in data["reply"]
-    assert "USD 10000.00" in data["reply"]
-    mock_call.assert_awaited_once_with("accounts", "get_balance", {"user_id": 4})
+    try:
+        with (
+            patch("main.get_user_mcp_tools", new=AsyncMock(side_effect=fake_get_user_mcp_tools)),
+            patch("main.run_coordinator", new=AsyncMock(return_value=coordinator_result)),
+        ):
+            response = client.post(
+                "/chat/process",
+                json={
+                    "user_id": 4,
+                    "role": "customer",
+                    "account_number": "FC1000000001",
+                    "session_id": 10,
+                    "message": "What is my balance?",
+                },
+                headers={"X-Internal-Key": "test-internal-key"},
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["intent"] == "accounts"
+        assert data["tools_called"] == ["get_balance"]
+        assert "10,000.00" in data["reply"]
+
+        async def verify_db():
+            async with session_factory() as session:
+                runs = (await session.exec(select(AgentRun))).all()
+                llm_rows = (await session.exec(select(LLMCall))).all()
+                tool_rows = (await session.exec(select(ToolCall))).all()
+                trace_rows = (await session.exec(select(AgentTrace))).all()
+                return runs, llm_rows, tool_rows, trace_rows
+
+        runs, llm_rows, tool_rows, trace_rows = asyncio.run(verify_db())
+        assert len(runs) == 1
+        assert runs[0].status == "completed"
+        assert runs[0].intent == "accounts"
+        assert runs[0].finished_at is not None
+        assert len(llm_rows) == 2
+        assert len(tool_rows) == 1
+        assert tool_rows[0].tool_name == "get_balance"
+        assert tool_rows[0].success is True
+        assert len(trace_rows) == 2
+    finally:
+        app.dependency_overrides.clear()
+        asyncio.run(engine.dispose())
 
 
-def test_process_chat_routes_other_deterministic_queries(monkeypatch):
+def test_process_chat_logs_failed_run_and_returns_502_on_error(monkeypatch):
     monkeypatch.setenv("INTERNAL_API_KEY", "test-internal-key")
-    base_payload = {
-        "user_id": 4,
-        "role": "customer",
-        "account_number": "FC1000000001",
-        "session_id": 10,
-    }
+    engine, session_factory, repo = asyncio.run(_make_test_db())
+    app.dependency_overrides[get_ai_repository] = lambda: repo
 
-    with patch(
-        "main.call_mcp_tool",
-        new=AsyncMock(
-            return_value={
-                "account_number": "FC1000000001",
-                "transactions": [
-                    {
-                        "transaction_type": "deposit",
-                        "amount": "10000.00",
-                        "reference": "TXN-123",
-                        "description": "Opening deposit",
-                    }
-                ],
-            }
-        ),
-    ) as mock_call:
-        resp = client.post(
-            "/chat/process",
-            json={**base_payload, "message": "Show my recent transactions"},
-            headers={"X-Internal-Key": "test-internal-key"},
-        )
-    assert resp.status_code == 200
-    assert resp.json()["tools_called"] == ["get_transactions"]
-    assert "TXN-123" in resp.json()["reply"]
-    mock_call.assert_awaited_once_with("transactions", "get_transactions", {"user_id": 4, "limit": 5})
+    async def fake_get_user_mcp_tools(*, user_id: int, telemetry_records=None, **_kwargs):
+        if telemetry_records is not None:
+            telemetry_records.append(
+                ToolCallTelemetry(
+                    tool_name="get_balance",
+                    mcp_server="accounts",
+                    input_json={"user_id": user_id},
+                    output_json={},
+                    latency_ms=55,
+                    success=False,
+                    error_message="MCP down",
+                )
+            )
+        return []
 
-    with patch(
-        "main.call_mcp_tool",
-        new=AsyncMock(return_value={"username": "customer1", "kyc_status": "partial", "missing_fields": ["national_id"]}),
-    ) as mock_call:
-        resp = client.post(
-            "/chat/process",
-            json={**base_payload, "message": "Check my KYC status"},
-            headers={"X-Internal-Key": "test-internal-key"},
-        )
-    assert resp.status_code == 200
-    assert resp.json()["tools_called"] == ["get_kyc_status"]
-    assert "partial" in resp.json()["reply"]
-    mock_call.assert_awaited_once_with("service", "get_kyc_status", {"user_id": 4})
+    try:
+        with (
+            patch("main.get_user_mcp_tools", new=AsyncMock(side_effect=fake_get_user_mcp_tools)),
+            patch("main.run_coordinator", new=AsyncMock(side_effect=RuntimeError("MCP down"))),
+        ):
+            response = client.post(
+                "/chat/process",
+                json={
+                    "user_id": 4,
+                    "role": "customer",
+                    "account_number": "FC1000000001",
+                    "session_id": 10,
+                    "message": "What is my balance?",
+                },
+                headers={"X-Internal-Key": "test-internal-key"},
+            )
 
+        assert response.status_code == 502
+        assert "MCP down" in response.json()["detail"]
 
-def test_process_chat_returns_502_on_mcp_failure(monkeypatch):
-    monkeypatch.setenv("INTERNAL_API_KEY", "test-internal-key")
-    payload = {
-        "user_id": 4,
-        "role": "customer",
-        "account_number": "FC1000000001",
-        "session_id": 10,
-        "message": "What is my balance?",
-    }
+        async def verify_db():
+            async with session_factory() as session:
+                runs = (await session.exec(select(AgentRun))).all()
+                tool_rows = (await session.exec(select(ToolCall))).all()
+                return runs, tool_rows
 
-    with patch("main.call_mcp_tool", new=AsyncMock(side_effect=RuntimeError("MCP down"))):
-        response = client.post(
-            "/chat/process",
-            json=payload,
-            headers={"X-Internal-Key": "test-internal-key"},
-        )
-
-    assert response.status_code == 502
-    assert "MCP down" in response.json()["detail"]
+        runs, tool_rows = asyncio.run(verify_db())
+        assert len(runs) == 1
+        assert runs[0].status == "failed"
+        assert "MCP down" in (runs[0].error_message or "")
+        assert len(tool_rows) == 1
+        assert tool_rows[0].success is False
+    finally:
+        app.dependency_overrides.clear()
+        asyncio.run(engine.dispose())
 
 
 def test_call_mcp_tool_extracts_data_and_handles_errors(monkeypatch):
