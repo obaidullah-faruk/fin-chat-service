@@ -68,6 +68,9 @@ services:
       DJANGO_API_URL: http://backend:8000
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       AI_DB_URL: postgresql+asyncpg://${AI_DB_USER:-finchat_ai}:${AI_DB_PASSWORD:-finchat_ai_secret}@ai-db:5432/${AI_DB_NAME:-finchat_ai}
+      ACCOUNTS_MCP_URL: ${ACCOUNTS_MCP_URL:-http://accounts-mcp:8002/mcp}
+      TRANSACTIONS_MCP_URL: ${TRANSACTIONS_MCP_URL:-http://transactions-mcp:8003/mcp}
+      SERVICE_MCP_URL: ${SERVICE_MCP_URL:-http://service-mcp:8004/mcp}
     ports:
       - "8001:8001"
     depends_on:
@@ -77,6 +80,12 @@ services:
         condition: service_healthy
       ai-db:
         condition: service_healthy
+      accounts-mcp:
+        condition: service_started
+      transactions-mcp:
+        condition: service_started
+      service-mcp:
+        condition: service_started
 
   accounts-mcp:
     build: ./accounts-mcp
