@@ -1,14 +1,22 @@
 # FinChat Service
 
-FinChat Service is a financial banking and assistant platform built with Django REST Framework, PostgreSQL 18, and React (Vite + Material UI). It provides role-based access control, account management, deposits, withdrawals, transfers, cheque book requests, USD currency endorsements, address management, structured JSON logging, and a floating chat widget prepared for future LLM agent and MCP server integration.
+FinChat Service is a financial banking and assistant platform built with Django REST Framework (ASGI via Uvicorn), FastAPI, PostgreSQL 18, Redis 8, and React (Vite + Material UI). It provides role-based access control, account management, deposits, withdrawals, transfers, cheque book requests, USD currency endorsements, address management, structured JSON logging, and a multi-service chat pipeline.
+
+![FinChat Architecture](./diagram/architecture_bw.png)
 
 ## Folder Structure
 
 ```text
 fin-chat-service/
-├── backend/              Django REST API, PostgreSQL models, seeder, tests
+├── backend/              Django REST API (ASGI), PostgreSQL models, seeder, tests
 ├── frontend/             React + TypeScript + Material UI application
-├── docker-compose.yml    PostgreSQL 18 and Django backend containers
+├── ai-service/           FastAPI AI orchestration service (echo plumbing)
+├── accounts-mcp/         Accounts MCP server 
+├── transactions-mcp/     Transactions MCP server 
+├── service-mcp/          Service MCP server 
+├── diagram/              Architecture diagrams and generator scripts
+├── ARCHITECTURE_GUIDE.md Architecture & phased implementation guide
+├── docker-compose.yml    PostgreSQL 18 (bank-db, ai-db), Redis 8, backend, AI, and MCP services
 ├── .env.example          Environment configuration template
 └── README.md
 ```
@@ -28,17 +36,25 @@ Copy the example environment file if `.env` does not exist:
 cp .env.example .env
 ```
 
-### 2. Start Database and Backend (Docker)
+For anything beyond local testing, replace `INTERNAL_API_KEY` in `.env` with a strong random secret (for example, `openssl rand -hex 32`).
+
+### 2. Start Services (Docker)
 
 ```bash
-docker compose up --build
+docker compose up --build --remove-orphans
 ```
 
-This starts PostgreSQL 18 and the Django backend on `http://localhost:8000`, runs database migrations, and seeds initial roles and test users.
+(`--remove-orphans` cleanly removes the legacy `db` container if upgrading from the initial setup while keeping the `pgdata` volume.)
+
+This starts `bank-db` (`:5432`), `ai-db` (`:5433`), `redis` (`:6379`), the Django backend (`:8000` via Uvicorn), `ai-service` (`:8001`), and the three MCP placeholder servers (`:8002`–`:8004`), runs database migrations, and seeds initial roles and test users.
 
 - Backend API: `http://localhost:8000/api/v1/`
 - Swagger UI: `http://localhost:8000/api/schema/swagger-ui/`
-- Health Check: `http://localhost:8000/api/v1/health/`
+- Backend Health Check: `http://localhost:8000/api/v1/health/`
+- AI Service Health Check: `http://localhost:8001/health`
+- Accounts MCP Health Check: `http://localhost:8002/health`
+- Transactions MCP Health Check: `http://localhost:8003/health`
+- Service MCP Health Check: `http://localhost:8004/health`
 
 ### 3. Start Frontend (Local)
 
@@ -50,7 +66,7 @@ npm install
 npm run dev
 ```
 
-The frontend dev server runs at `http://localhost:5173`.
+The frontend dev server runs at `http://localhost:5173`. Chat messages are sent to `POST /api/v1/chat/sessions/{id}/agent/`, which forwards requests to `ai-service` (`X-Internal-Key`) and persists the exchange in `bank-db`.
 
 ## Seeded Test Users
 
@@ -82,6 +98,12 @@ Run backend unit and integration tests:
 docker compose exec backend python manage.py test apps --verbosity=2
 ```
 
+Run AI service unit tests:
+
+```bash
+docker compose exec ai-service pytest -v
+```
+
 Validate OpenAPI schema:
 
 ```bash
@@ -93,4 +115,3 @@ Build frontend for type-checking:
 ```bash
 cd frontend && npm run build
 ```
-
