@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     service_mcp_url: str = Field(default="http://service-mcp:8004/mcp")
 
     gemini_api_key: str = Field(default="")
-    gemini_model: str = Field(default="gemini-2.0-flash")
+    gemini_model: str = Field(default="gemini-3.8-flash")
     gemini_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
 
     @property

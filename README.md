@@ -43,7 +43,7 @@ Add your Gemini API key to `.env` (required for `ai-service`):
 
 ```env
 GEMINI_API_KEY=your-actual-gemini-api-key
-GEMINI_MODEL=gemini-2.0-flash
+GEMINI_MODEL=gemini-3.8-flash
 ```
 
 For anything beyond local testing, replace `INTERNAL_API_KEY` in `.env` with a strong random secret (for example, `openssl rand -hex 32`).

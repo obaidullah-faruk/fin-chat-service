@@ -72,7 +72,7 @@ services:
       TRANSACTIONS_MCP_URL: ${TRANSACTIONS_MCP_URL:-http://transactions-mcp:8003/mcp}
       SERVICE_MCP_URL: ${SERVICE_MCP_URL:-http://service-mcp:8004/mcp}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
       GEMINI_TEMPERATURE: ${GEMINI_TEMPERATURE:-0.0}
     ports:
       - "8001:8001"

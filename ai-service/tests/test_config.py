@@ -21,7 +21,7 @@ def test_settings_defaults(monkeypatch):
     settings = get_settings()
     assert settings.django_api_url == "http://backend:8000"
     assert settings.redis_url == "redis://redis:6379/0"
-    assert settings.gemini_model == "gemini-2.0-flash"
+    assert settings.gemini_model == "gemini-3.8-flash"
     assert settings.gemini_temperature == 0.0
     assert settings.mcp_server_urls == {
         "accounts": "http://accounts-mcp:8002/mcp",
