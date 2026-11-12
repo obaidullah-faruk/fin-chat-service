@@ -1,14 +1,26 @@
-import uvicorn
-from fastapi import FastAPI
+import os
 
-app = FastAPI(title="Transactions MCP Service", version="0.1.0")
+from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from tools.transaction_tools import get_statement, get_transactions
+
+mcp = FastMCP("transactions-mcp")
+mcp.tool()(get_transactions)
+mcp.tool()(get_statement)
 
 
-@app.get("/health")
-async def health_check() -> dict[str, str]:
-    return {"status": "ok", "service": "transactions-mcp"}
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok", "service": "transactions-mcp"})
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8003)
-
+    port = int(os.environ.get("PORT", "8003"))
+    mcp.run(
+        transport="streamable-http",
+        host="0.0.0.0",
+        port=port,
+        path="/mcp",
+    )
