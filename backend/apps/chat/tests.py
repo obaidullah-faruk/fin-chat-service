@@ -1,7 +1,13 @@
+from unittest.mock import Mock, patch
+
+import httpx
 from django.core.management import call_command
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from .models import ChatMessage
 
 
 class ChatTests(APITestCase):
@@ -30,4 +36,72 @@ class ChatTests(APITestCase):
         # Another customer cannot access this session
         self._authenticate('customer2')
         self.assertEqual(self.client.get(msg_url).status_code, status.HTTP_404_NOT_FOUND)
+
+    @override_settings(
+        INTERNAL_API_KEY='test-internal-key',
+        AI_SERVICE_URL='http://ai-service:8001',
+    )
+    @patch('apps.chat.views.httpx.Client')
+    def test_agent_chat_calls_ai_service_and_persists_messages(self, mock_client_cls):
+        self._authenticate('customer1')
+        session_resp = self.client.post(self.sessions_url, {})
+        session_id = session_resp.data['id']
+
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            'reply': '[AI Service Echo] Received: "Hello agent"',
+            'tools_called': [],
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_client = mock_client_cls.return_value.__enter__.return_value
+        mock_client.post.return_value = mock_response
+
+        agent_url = reverse('chat-session-agent', args=[session_id])
+        resp = self.client.post(agent_url, {'content': 'Hello agent'})
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data['user_message']['content'], 'Hello agent')
+        self.assertEqual(
+            resp.data['assistant_message']['content'],
+            '[AI Service Echo] Received: "Hello agent"',
+        )
+        self.assertEqual(ChatMessage.objects.filter(session_id=session_id).count(), 2)
+
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        self.assertEqual(call_args.args[0], 'http://ai-service:8001/chat/process')
+        self.assertEqual(call_args.kwargs['headers'], {'X-Internal-Key': 'test-internal-key'})
+        self.assertEqual(call_args.kwargs['json']['role'], 'customer')
+        self.assertEqual(call_args.kwargs['json']['account_number'], 'FC1000000001')
+        self.assertEqual(call_args.kwargs['json']['session_id'], session_id)
+        self.assertEqual(call_args.kwargs['json']['message'], 'Hello agent')
+
+    @override_settings(
+        INTERNAL_API_KEY='test-internal-key',
+        AI_SERVICE_URL='http://ai-service:8001',
+    )
+    @patch('apps.chat.views.httpx.Client')
+    def test_agent_chat_handles_ai_service_failure(self, mock_client_cls):
+        self._authenticate('customer1')
+        session_resp = self.client.post(self.sessions_url, {})
+        session_id = session_resp.data['id']
+
+        mock_client = mock_client_cls.return_value.__enter__.return_value
+        mock_client.post.side_effect = httpx.ConnectError('connection refused')
+
+        agent_url = reverse('chat-session-agent', args=[session_id])
+        resp = self.client.post(agent_url, {'content': 'Hello agent'})
+
+        self.assertEqual(resp.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(ChatMessage.objects.filter(session_id=session_id).count(), 0)
+
+    def test_agent_chat_rejects_other_users_session(self):
+        self._authenticate('customer1')
+        session_id = self.client.post(self.sessions_url, {}).data['id']
+
+        self._authenticate('customer2')
+        agent_url = reverse('chat-session-agent', args=[session_id])
+        resp = self.client.post(agent_url, {'content': 'Unauthorized'})
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
 

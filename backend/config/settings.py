@@ -146,6 +146,9 @@ SPECTACULAR_SETTINGS = {
 
 SEED_DEFAULT_PASSWORD = config('SEED_DEFAULT_PASSWORD', default='Test@1234')
 
+INTERNAL_API_KEY = config('INTERNAL_API_KEY', default='')
+AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://ai-service:8001')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

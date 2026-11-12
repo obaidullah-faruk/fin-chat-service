@@ -1,20 +1,30 @@
 import logging
+
+import httpx
+from django.conf import settings
 from django.db import transaction
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import APIException, NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import ChatMessage, ChatSession
 from .serializers import (
+    ChatExchangeResponseSerializer,
     ChatMessageCreateSerializer,
     ChatMessageSerializer,
     ChatSessionSerializer,
 )
 
 logger = logging.getLogger('finchat.chat')
+
+
+class AIServiceUnavailableError(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = 'AI service is temporarily unavailable.'
+    default_code = 'ai_service_unavailable'
 
 
 def _generate_placeholder_reply(user, content: str) -> str:
@@ -94,6 +104,83 @@ class ChatMessageListCreateView(APIView):
 
         logger.info(
             'Chat message exchanged',
+            extra={'user_id': request.user.id, 'session_id': session.id},
+        )
+        return Response(
+            {
+                'user_message': ChatMessageSerializer(user_msg).data,
+                'assistant_message': ChatMessageSerializer(assistant_msg).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AgentChatView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _get_session(self, user, session_id: int) -> ChatSession:
+        try:
+            return ChatSession.objects.get(pk=session_id, user=user)
+        except ChatSession.DoesNotExist as exc:
+            raise NotFound('Chat session not found.') from exc
+
+    def _call_ai_service(self, user, session: ChatSession, message: str) -> dict:
+        account = getattr(user, 'bank_account', None)
+        payload = {
+            'user_id': user.id,
+            'role': user.role.name,
+            'account_number': account.account_number if account else None,
+            'session_id': session.id,
+            'message': message,
+        }
+        headers = {'X-Internal-Key': settings.INTERNAL_API_KEY}
+        url = f"{settings.AI_SERVICE_URL.rstrip('/')}/chat/process"
+
+        try:
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                if not isinstance(data, dict) or not isinstance(data.get('reply'), str):
+                    raise ValueError('Invalid AI service response format.')
+                return data
+        except (httpx.HTTPError, ValueError) as exc:
+            logger.error(
+                'AI service request failed',
+                extra={'user_id': user.id, 'session_id': session.id, 'error': str(exc)},
+            )
+            raise AIServiceUnavailableError() from exc
+
+    @extend_schema(request=ChatMessageCreateSerializer, responses={201: ChatExchangeResponseSerializer})
+    @transaction.atomic
+    def post(self, request, session_id: int):
+        session = self._get_session(request.user, session_id)
+        serializer = ChatMessageCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        content = serializer.validated_data['content'].strip()
+
+        ai_data = self._call_ai_service(request.user, session, content)
+        reply_text = ai_data['reply']
+        tools_called = ai_data.get('tools_called', [])
+
+        user_msg = ChatMessage.objects.create(
+            session=session,
+            role=ChatMessage.Role.USER,
+            content=content,
+        )
+        assistant_msg = ChatMessage.objects.create(
+            session=session,
+            role=ChatMessage.Role.ASSISTANT,
+            content=reply_text,
+            metadata={'mode': 'ai_service', 'tools_called': tools_called},
+        )
+
+        if not session.title:
+            session.title = content[:60]
+        session.save(update_fields=['title', 'updated_at'])
+
+        logger.info(
+            'Agent chat message processed',
             extra={'user_id': request.user.id, 'session_id': session.id},
         )
         return Response(

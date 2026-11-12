@@ -14,6 +14,11 @@ class ChatMessageCreateSerializer(serializers.Serializer):
     content = serializers.CharField(min_length=1, max_length=4000)
 
 
+class ChatExchangeResponseSerializer(serializers.Serializer):
+    user_message = ChatMessageSerializer()
+    assistant_message = ChatMessageSerializer()
+
+
 class ChatSessionSerializer(serializers.ModelSerializer):
     message_count = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()

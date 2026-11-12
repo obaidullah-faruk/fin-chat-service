@@ -33,7 +33,7 @@ export const chatApi = {
     content: string
   ): Promise<SendMessageResponse> => {
     const { data } = await apiClient.post<SendMessageResponse>(
-      `/chat/sessions/${sessionId}/messages/`,
+      `/chat/sessions/${sessionId}/agent/`,
       { content }
     );
     return data;
