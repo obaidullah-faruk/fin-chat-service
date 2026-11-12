@@ -36,6 +36,16 @@ Copy the example environment file if `.env` does not exist:
 cp .env.example .env
 ```
 
+Add your Gemini API key to `.env` (required for `ai-service`):
+
+1. Open [Google AI Studio](https://aistudio.google.com/apikey) and create an API key.
+2. Set `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in `.env`:
+
+```env
+GEMINI_API_KEY=your-actual-gemini-api-key
+GEMINI_MODEL=gemini-2.0-flash
+```
+
 For anything beyond local testing, replace `INTERNAL_API_KEY` in `.env` with a strong random secret (for example, `openssl rand -hex 32`).
 
 ### 2. Start Services (Docker)

@@ -1,16 +1,13 @@
 import json
-import os
 from typing import Any
 
 from fastmcp import Client
 
+from config import get_settings
+
 
 def get_mcp_server_urls() -> dict[str, str]:
-    return {
-        "accounts": os.environ.get("ACCOUNTS_MCP_URL", "http://accounts-mcp:8002/mcp"),
-        "transactions": os.environ.get("TRANSACTIONS_MCP_URL", "http://transactions-mcp:8003/mcp"),
-        "service": os.environ.get("SERVICE_MCP_URL", "http://service-mcp:8004/mcp"),
-    }
+    return get_settings().mcp_server_urls
 
 
 def _extract_tool_payload(result: Any) -> dict[str, Any]:
