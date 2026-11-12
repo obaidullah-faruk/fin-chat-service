@@ -303,3 +303,36 @@ class ActivityLogSerializer(serializers.ModelSerializer):
             return obj.actor.role.name
         return None
 
+
+class InternalAddressUpsertSerializer(serializers.Serializer):
+    address_id = serializers.IntegerField(required=False, allow_null=True, default=None)
+    label = serializers.ChoiceField(
+        choices=Address.Label.choices,
+        required=False,
+        default=Address.Label.HOME,
+    )
+    street = serializers.CharField()
+    city = serializers.CharField(max_length=100)
+    state = serializers.CharField(max_length=100)
+    postal_code = serializers.CharField(max_length=20)
+    country = serializers.CharField(max_length=100)
+    is_primary = serializers.BooleanField(required=False, default=True)
+
+
+class InternalKYCStatusSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    username = serializers.CharField()
+    full_name = serializers.CharField()
+    email = serializers.EmailField()
+    phone = serializers.CharField(allow_blank=True)
+    is_active = serializers.BooleanField()
+    kyc_status = serializers.ChoiceField(choices=['verified', 'partial', 'incomplete'])
+    has_national_id = serializers.BooleanField()
+    has_date_of_birth = serializers.BooleanField()
+    has_primary_address = serializers.BooleanField()
+    has_bank_account = serializers.BooleanField()
+    is_usd_endorsed = serializers.BooleanField()
+    latest_endorsement_status = serializers.CharField(allow_null=True)
+    missing_fields = serializers.ListField(child=serializers.CharField())
+
+

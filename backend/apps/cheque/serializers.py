@@ -77,3 +77,17 @@ class ChequeBookReviewSerializer(serializers.Serializer):
     )
     remarks = serializers.CharField(required=False, allow_blank=True, default='')
 
+
+class InternalChequeRequestCreateSerializer(serializers.Serializer):
+    leaves_requested = serializers.IntegerField(required=False, default=25)
+    delivery_address_id = serializers.IntegerField(required=False, allow_null=True, default=None)
+    remarks = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate_leaves_requested(self, value: int) -> int:
+        if value not in ALLOWED_LEAF_COUNTS:
+            raise serializers.ValidationError(
+                f'Leaves requested must be one of {ALLOWED_LEAF_COUNTS}.'
+            )
+        return value
+
+

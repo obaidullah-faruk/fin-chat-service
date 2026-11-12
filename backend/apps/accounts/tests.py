@@ -1,10 +1,12 @@
+from datetime import date
 from decimal import Decimal
 from django.core.management import call_command
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import ActivityLog, Address, CustomUser, Role
+from apps.accounts.models import ActivityLog, Address, CustomUser, Role, UserProfile
 from apps.banking.models import BankAccount
 
 
@@ -185,4 +187,142 @@ class AccountsAndRBACTests(APITestCase):
         self.assertEqual(me2.status_code, status.HTTP_200_OK)
         self.assertEqual(me2.data['username'], 'customer2')
         self.assertNotEqual(me2.data['id'], me1.data['id'])
+
+
+@override_settings(INTERNAL_API_KEY='test-internal-secret')
+class InternalServiceAccountTests(APITestCase):
+    def setUp(self):
+        call_command('seed_users')
+        self.customer1 = CustomUser.objects.get(username='customer1')
+        self.address_url = reverse('internal-service-address')
+        self.kyc_url = reverse('internal-service-kyc-status')
+        self.valid_headers = {
+            'HTTP_X_INTERNAL_KEY': 'test-internal-secret',
+            'HTTP_X_USER_ID': str(self.customer1.id),
+        }
+
+    def test_service_endpoints_require_internal_key(self):
+        self.assertEqual(
+            self.client.get(
+                self.kyc_url,
+                HTTP_X_USER_ID=str(self.customer1.id),
+            ).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+        self.assertEqual(
+            self.client.post(
+                self.address_url,
+                {
+                    'street': '10 Lake Road',
+                    'city': 'Dhaka',
+                    'state': 'Dhaka',
+                    'postal_code': '1212',
+                    'country': 'Bangladesh',
+                },
+                format='json',
+                HTTP_X_INTERNAL_KEY='wrong-key',
+                HTTP_X_USER_ID=str(self.customer1.id),
+            ).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_internal_address_updates_primary_and_creates_secondary(self):
+        # Seeded customer1 already has a primary address -> updates in place (200)
+        update_resp = self.client.post(
+            self.address_url,
+            {
+                'label': 'home',
+                'street': '99 Kemal Ataturk Ave',
+                'city': 'Dhaka',
+                'state': 'Dhaka',
+                'postal_code': '1213',
+                'country': 'Bangladesh',
+                'is_primary': True,
+            },
+            format='json',
+            **self.valid_headers,
+        )
+        self.assertEqual(update_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(update_resp.data['street'], '99 Kemal Ataturk Ave')
+        self.assertEqual(Address.objects.filter(user=self.customer1).count(), 1)
+        self.assertTrue(
+            ActivityLog.objects.filter(
+                subject_user=self.customer1,
+                category=ActivityLog.Category.PROFILE,
+                action='ADDRESS_UPDATED',
+            ).exists()
+        )
+
+        # Adding non-primary address creates a second record (201)
+        create_resp = self.client.post(
+            self.address_url,
+            {
+                'label': 'work',
+                'street': '12 Motijheel C/A',
+                'city': 'Dhaka',
+                'state': 'Dhaka',
+                'postal_code': '1000',
+                'country': 'Bangladesh',
+                'is_primary': False,
+            },
+            format='json',
+            **self.valid_headers,
+        )
+        self.assertEqual(create_resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Address.objects.filter(user=self.customer1).count(), 2)
+
+        # Missing required fields -> 400; non-owned address_id -> 404
+        self.assertEqual(
+            self.client.post(
+                self.address_url,
+                {'street': 'Only street'},
+                format='json',
+                **self.valid_headers,
+            ).status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            self.client.post(
+                self.address_url,
+                {
+                    'address_id': 999999,
+                    'street': '123 St',
+                    'city': 'Dhaka',
+                    'state': 'Dhaka',
+                    'postal_code': '1000',
+                    'country': 'Bangladesh',
+                },
+                format='json',
+                **self.valid_headers,
+            ).status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    def test_internal_kyc_status_reflects_profile_completeness(self):
+        # Seeded customer1 has primary address but no national_id / date_of_birth
+        partial_resp = self.client.get(self.kyc_url, **self.valid_headers)
+        self.assertEqual(partial_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(partial_resp.data['username'], 'customer1')
+        self.assertEqual(partial_resp.data['kyc_status'], 'partial')
+        self.assertTrue(partial_resp.data['has_primary_address'])
+        self.assertTrue(partial_resp.data['has_bank_account'])
+        self.assertFalse(partial_resp.data['has_national_id'])
+        self.assertFalse(partial_resp.data['has_date_of_birth'])
+        self.assertEqual(
+            set(partial_resp.data['missing_fields']),
+            {'national_id', 'date_of_birth'},
+        )
+
+        # Complete profile -> verified
+        profile, _ = UserProfile.objects.get_or_create(user=self.customer1)
+        profile.national_id = '1990123456789'
+        profile.date_of_birth = date(1990, 5, 15)
+        profile.save()
+
+        verified_resp = self.client.get(self.kyc_url, **self.valid_headers)
+        self.assertEqual(verified_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(verified_resp.data['kyc_status'], 'verified')
+        self.assertTrue(verified_resp.data['has_national_id'])
+        self.assertTrue(verified_resp.data['has_date_of_birth'])
+        self.assertEqual(verified_resp.data['missing_fields'], [])
 

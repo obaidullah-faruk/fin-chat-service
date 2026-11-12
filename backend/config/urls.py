@@ -26,6 +26,8 @@ urlpatterns = [
     path('api/v1/chat/', include('apps.chat.urls')),
     # Internal service-to-service endpoints (MCP servers only)
     path('internal/banking/', include('apps.banking.internal_urls')),
+    path('internal/service/', include('apps.cheque.internal_urls')),
+    path('internal/service/', include('apps.accounts.internal_urls')),
     # OpenAPI Schema & Swagger UI
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path(

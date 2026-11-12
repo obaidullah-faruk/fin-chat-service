@@ -1,9 +1,11 @@
 from django.core.management import call_command
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import CustomUser
+from apps.accounts.models import ActivityLog, CustomUser
+from apps.cheque.models import ChequeBookRequest
 
 
 class ChequeBookTests(APITestCase):
@@ -57,4 +59,74 @@ class ChequeBookTests(APITestCase):
         self._authenticate('manager1')
         mgr_approve = self.client.patch(review_url, {'status': 'approved'})
         self.assertEqual(mgr_approve.status_code, status.HTTP_200_OK)
+
+
+@override_settings(INTERNAL_API_KEY='test-internal-secret')
+class InternalChequeServiceTests(APITestCase):
+    def setUp(self):
+        call_command('seed_users')
+        self.customer1 = CustomUser.objects.get(username='customer1')
+        self.url = reverse('internal-service-cheque-request')
+        self.valid_headers = {
+            'HTTP_X_INTERNAL_KEY': 'test-internal-secret',
+            'HTTP_X_USER_ID': str(self.customer1.id),
+        }
+
+    def test_requires_internal_key(self):
+        self.assertEqual(
+            self.client.post(
+                self.url,
+                {'leaves_requested': 25},
+                HTTP_X_USER_ID=str(self.customer1.id),
+            ).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+        self.assertEqual(
+            self.client.post(
+                self.url,
+                {'leaves_requested': 25},
+                HTTP_X_INTERNAL_KEY='wrong-key',
+                HTTP_X_USER_ID=str(self.customer1.id),
+            ).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_create_cheque_request_uses_primary_address_and_logs_activity(self):
+        resp = self.client.post(
+            self.url,
+            {'leaves_requested': 50, 'remarks': 'Requested via chatbot'},
+            format='json',
+            **self.valid_headers,
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data['leaves_requested'], 50)
+        self.assertEqual(resp.data['status'], ChequeBookRequest.Status.PENDING)
+        self.assertEqual(resp.data['account_number'], 'FC1000000001')
+        self.assertIn('42 Gulshan Avenue', resp.data['delivery_address_snapshot'])
+        self.assertTrue(
+            ActivityLog.objects.filter(
+                subject_user=self.customer1,
+                category=ActivityLog.Category.CHEQUE,
+                action='CHEQUE_REQUESTED',
+            ).exists()
+        )
+
+    def test_rejects_invalid_leaves_or_foreign_address(self):
+        bad_leaves = self.client.post(
+            self.url,
+            {'leaves_requested': 15},
+            format='json',
+            **self.valid_headers,
+        )
+        self.assertEqual(bad_leaves.status_code, status.HTTP_400_BAD_REQUEST)
+
+        customer2 = CustomUser.objects.get(username='customer2')
+        c2_address = customer2.addresses.first()
+        bad_addr = self.client.post(
+            self.url,
+            {'leaves_requested': 25, 'delivery_address_id': c2_address.id},
+            format='json',
+            **self.valid_headers,
+        )
+        self.assertEqual(bad_addr.status_code, status.HTTP_404_NOT_FOUND)
 
