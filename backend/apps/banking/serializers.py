@@ -227,3 +227,65 @@ class StaffDashboardSummarySerializer(serializers.Serializer):
     pending_endorsements = serializers.IntegerField()
     recent_transactions = TransactionSerializer(many=True)
     recent_activities = ActivityLogSerializer(many=True)
+
+
+class InternalBalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            'account_number',
+            'account_type',
+            'balance',
+            'currency',
+            'is_active',
+        ]
+
+
+class InternalAccountInfoSerializer(serializers.ModelSerializer):
+    holder_name = serializers.CharField(source='user.full_name', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = BankAccount
+        fields = [
+            'account_number',
+            'account_type',
+            'balance',
+            'currency',
+            'is_usd_endorsed',
+            'usd_endorsement_limit',
+            'is_active',
+            'holder_name',
+            'username',
+            'email',
+            'created_at',
+            'updated_at',
+        ]
+
+
+class InternalTransactionListResponseSerializer(serializers.Serializer):
+    account_number = serializers.CharField()
+    count = serializers.IntegerField()
+    transactions = TransactionSerializer(many=True)
+
+
+class InternalStatementPeriodSerializer(serializers.Serializer):
+    start_date = serializers.DateField(allow_null=True)
+    end_date = serializers.DateField(allow_null=True)
+
+
+class InternalStatementSummarySerializer(serializers.Serializer):
+    total_deposits = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_withdrawals = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_transfers_in = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_transfers_out = serializers.DecimalField(max_digits=15, decimal_places=2)
+    transaction_count = serializers.IntegerField()
+
+
+class InternalStatementResponseSerializer(serializers.Serializer):
+    account = InternalAccountInfoSerializer()
+    period = InternalStatementPeriodSerializer()
+    summary = InternalStatementSummarySerializer()
+    transactions = TransactionSerializer(many=True)
+

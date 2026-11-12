@@ -1,6 +1,9 @@
+from datetime import timedelta
 from decimal import Decimal
 from django.core.management import call_command
+from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -172,4 +175,212 @@ class BankingTests(APITestCase):
         self.assertEqual(self_dep.status_code, status.HTTP_201_CREATED)
         self.assertEqual(self_dep.data['channel'], Transaction.Channel.ATM)
         self.assertEqual(Decimal(self_dep.data['balance_after']), Decimal('2250.00'))
+
+
+@override_settings(INTERNAL_API_KEY='test-internal-secret')
+class InternalBankingTests(APITestCase):
+    def setUp(self):
+        call_command('seed_users')
+        self.customer1 = CustomUser.objects.get(username='customer1')
+        self.admin1 = CustomUser.objects.get(username='admin1')
+        self.balance_url = reverse('internal-banking-balance')
+        self.account_info_url = reverse('internal-banking-account-info')
+        self.transactions_url = reverse('internal-banking-transactions')
+        self.statement_url = reverse('internal-banking-statement')
+        self.valid_headers = {
+            'HTTP_X_INTERNAL_KEY': 'test-internal-secret',
+            'HTTP_X_USER_ID': str(self.customer1.id),
+        }
+
+    def test_all_internal_endpoints_reject_missing_or_wrong_key(self):
+        login_resp = self.client.post(
+            reverse('auth-login'),
+            {'username': 'customer1', 'password': 'Test@1234'},
+        )
+        jwt_token = login_resp.data['access']
+
+        for url in (
+            self.balance_url,
+            self.account_info_url,
+            self.transactions_url,
+            self.statement_url,
+        ):
+            # No credentials
+            self.client.credentials()
+            self.assertEqual(
+                self.client.get(url, HTTP_X_USER_ID=str(self.customer1.id)).status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            # Wrong internal key
+            self.assertEqual(
+                self.client.get(
+                    url,
+                    HTTP_X_INTERNAL_KEY='wrong-key',
+                    HTTP_X_USER_ID=str(self.customer1.id),
+                ).status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+            # External JWT alone without X-Internal-Key is still rejected
+            self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {jwt_token}')
+            self.assertEqual(
+                self.client.get(url, HTTP_X_USER_ID=str(self.customer1.id)).status_code,
+                status.HTTP_403_FORBIDDEN,
+            )
+        self.client.credentials()
+
+    def test_internal_endpoints_reject_missing_account_or_invalid_user(self):
+        # Missing X-User-Id
+        resp = self.client.get(
+            self.balance_url,
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # User exists but has no bank account (admin1)
+        resp = self.client.get(
+            self.balance_url,
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.admin1.id),
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_internal_balance_returns_seeded_customer1_data(self):
+        resp = self.client.get(self.balance_url, **self.valid_headers)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['account_number'], 'FC1000000001')
+        self.assertEqual(resp.data['account_type'], 'savings')
+        self.assertEqual(Decimal(resp.data['balance']), Decimal('10000.00'))
+        self.assertEqual(resp.data['currency'], 'USD')
+        self.assertTrue(resp.data['is_active'])
+
+    def test_internal_account_info_returns_full_details(self):
+        resp = self.client.get(self.account_info_url, **self.valid_headers)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['account_number'], 'FC1000000001')
+        self.assertEqual(resp.data['account_type'], 'savings')
+        self.assertEqual(Decimal(resp.data['balance']), Decimal('10000.00'))
+        self.assertEqual(resp.data['currency'], 'USD')
+        self.assertFalse(resp.data['is_usd_endorsed'])
+        self.assertEqual(Decimal(resp.data['usd_endorsement_limit']), Decimal('0.00'))
+        self.assertTrue(resp.data['is_active'])
+        self.assertEqual(resp.data['holder_name'], 'Alice Rahman')
+        self.assertEqual(resp.data['username'], 'customer1')
+        self.assertEqual(resp.data['email'], 'customer1@finchat.local')
+
+    def test_internal_transactions_supports_limit_and_type_filtering(self):
+        account = self.customer1.bank_account
+        Transaction.objects.create(
+            account=account,
+            performed_by=self.customer1,
+            transaction_type=Transaction.Type.WITHDRAWAL,
+            channel=Transaction.Channel.ATM,
+            amount=Decimal('250.00'),
+            balance_after=Decimal('9750.00'),
+            description='ATM cash withdrawal',
+        )
+        Transaction.objects.create(
+            account=account,
+            performed_by=self.customer1,
+            transaction_type=Transaction.Type.DEPOSIT,
+            channel=Transaction.Channel.ONLINE,
+            amount=Decimal('500.00'),
+            balance_after=Decimal('10250.00'),
+            description='Online top up',
+        )
+
+        # Default returns all 3 transactions ordered newest-first
+        resp = self.client.get(self.transactions_url, **self.valid_headers)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['account_number'], 'FC1000000001')
+        self.assertEqual(resp.data['count'], 3)
+        self.assertEqual(len(resp.data['transactions']), 3)
+
+        # Limit parameter
+        limited = self.client.get(f'{self.transactions_url}?limit=2', **self.valid_headers)
+        self.assertEqual(limited.status_code, status.HTTP_200_OK)
+        self.assertEqual(limited.data['count'], 2)
+        self.assertEqual(limited.data['transactions'][0]['description'], 'Online top up')
+
+        # transaction_type filter
+        filtered = self.client.get(
+            f'{self.transactions_url}?transaction_type=withdrawal',
+            **self.valid_headers,
+        )
+        self.assertEqual(filtered.status_code, status.HTTP_200_OK)
+        self.assertEqual(filtered.data['count'], 1)
+        self.assertEqual(filtered.data['transactions'][0]['transaction_type'], 'withdrawal')
+
+        # Invalid limit / transaction_type rejected with 400
+        self.assertEqual(
+            self.client.get(f'{self.transactions_url}?limit=0', **self.valid_headers).status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            self.client.get(f'{self.transactions_url}?limit=abc', **self.valid_headers).status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            self.client.get(
+                f'{self.transactions_url}?transaction_type=invalid',
+                **self.valid_headers,
+            ).status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_internal_statement_filters_by_dates_and_returns_summary(self):
+        account = self.customer1.bank_account
+        old_txn = Transaction.objects.create(
+            account=account,
+            performed_by=self.customer1,
+            transaction_type=Transaction.Type.WITHDRAWAL,
+            channel=Transaction.Channel.ATM,
+            amount=Decimal('100.00'),
+            balance_after=Decimal('9900.00'),
+            description='Old withdrawal',
+        )
+        past_dt = timezone.now() - timedelta(days=15)
+        Transaction.objects.filter(pk=old_txn.pk).update(created_at=past_dt)
+
+        today = timezone.now().date()
+        start_recent = (today - timedelta(days=3)).isoformat()
+        end_recent = today.isoformat()
+
+        # Full statement (no date filters) includes both seeded deposit and old withdrawal
+        full_resp = self.client.get(self.statement_url, **self.valid_headers)
+        self.assertEqual(full_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(full_resp.data['account']['account_number'], 'FC1000000001')
+        self.assertEqual(full_resp.data['summary']['transaction_count'], 2)
+        self.assertEqual(Decimal(full_resp.data['summary']['total_deposits']), Decimal('10000.00'))
+        self.assertEqual(Decimal(full_resp.data['summary']['total_withdrawals']), Decimal('100.00'))
+
+        # Date-filtered statement excludes the 15-day-old withdrawal
+        filtered_resp = self.client.get(
+            f'{self.statement_url}?start_date={start_recent}&end_date={end_recent}',
+            **self.valid_headers,
+        )
+        self.assertEqual(filtered_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(filtered_resp.data['period']['start_date'], start_recent)
+        self.assertEqual(filtered_resp.data['period']['end_date'], end_recent)
+        self.assertEqual(filtered_resp.data['summary']['transaction_count'], 1)
+        self.assertEqual(
+            Decimal(filtered_resp.data['summary']['total_withdrawals']),
+            Decimal('0.00'),
+        )
+        self.assertEqual(len(filtered_resp.data['transactions']), 1)
+
+        # Invalid dates or inverted range return 400
+        self.assertEqual(
+            self.client.get(
+                f'{self.statement_url}?start_date=not-a-date',
+                **self.valid_headers,
+            ).status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            self.client.get(
+                f'{self.statement_url}?start_date=2026-05-10&end_date=2026-05-01',
+                **self.valid_headers,
+            ).status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
 
