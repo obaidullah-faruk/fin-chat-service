@@ -1,14 +1,27 @@
-import uvicorn
-from fastapi import FastAPI
+import os
 
-app = FastAPI(title="Service MCP Service", version="0.1.0")
+from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from tools.service_tools import get_kyc_status, request_cheque_book, update_address
+
+mcp = FastMCP("service-mcp")
+mcp.tool()(request_cheque_book)
+mcp.tool()(update_address)
+mcp.tool()(get_kyc_status)
 
 
-@app.get("/health")
-async def health_check() -> dict[str, str]:
-    return {"status": "ok", "service": "service-mcp"}
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok", "service": "service-mcp"})
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8004)
-
+    port = int(os.environ.get("PORT", "8004"))
+    mcp.run(
+        transport="streamable-http",
+        host="0.0.0.0",
+        port=port,
+        path="/mcp",
+    )
