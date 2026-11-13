@@ -15,6 +15,7 @@ from db import (
 )
 from mcp_client import (
     ToolCallTelemetry,
+    get_all_partitioned_mcp_tools,
     get_discovered_mcp_tools,
     get_user_mcp_tools,
 )
@@ -119,7 +120,7 @@ async def process_chat(
                 },
             )
 
-        tools = await get_user_mcp_tools(
+        tools = await get_all_partitioned_mcp_tools(
             user_id=payload.user_id,
             role=payload.role,
             telemetry_records=tool_telemetry,

@@ -2,8 +2,11 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from fastapi.testclient import TestClient
 import pytest
+pytest.importorskip("fastapi")
+pytest.importorskip("sqlmodel")
+
+from fastapi.testclient import TestClient
 from sqlmodel import select
 
 from agents.coordinator import CoordinatorResult, LLMCallTelemetry, TraceTelemetry

@@ -11,9 +11,47 @@ try:
     from langchain_core.tools import BaseTool, StructuredTool
     from langchain_mcp_adapters.client import MultiServerMCPClient
 except ImportError:
+    class StructuredToolStub:
+        def __init__(
+            self,
+            name: str,
+            coroutine: Any = None,
+            description: str = "",
+            args_schema: Any = None,
+            **kwargs: Any,
+        ) -> None:
+            self.name = name
+            self.coroutine = coroutine
+            self.description = description
+            self.args_schema = args_schema
+
+        @classmethod
+        def from_function(
+            cls,
+            coroutine: Any = None,
+            name: str = "",
+            description: str = "",
+            args_schema: Any = None,
+            **kwargs: Any,
+        ) -> "StructuredToolStub":
+            return cls(
+                name=name,
+                coroutine=coroutine,
+                description=description,
+                args_schema=args_schema,
+                **kwargs,
+            )
+
+        async def ainvoke(self, input_dict: Any = None, **kwargs: Any) -> Any:
+            call_kwargs = dict(input_dict or {})
+            call_kwargs.update(kwargs)
+            if self.coroutine:
+                return await self.coroutine(**call_kwargs)
+            return "{}"
+
     Client = Any  # type: ignore[assignment,misc]
     BaseTool = Any  # type: ignore[assignment,misc]
-    StructuredTool = Any  # type: ignore[assignment,misc]
+    StructuredTool = StructuredToolStub  # type: ignore[assignment,misc]
     MultiServerMCPClient = Any  # type: ignore[assignment,misc]
 from pydantic import BaseModel
 

@@ -119,9 +119,12 @@ def test_role_case_insensitivity():
 
 
 def test_mcp_tool_binding_authorization_enforcement():
-    langchain_core = pytest.importorskip("langchain_core")
-    from langchain_core.tools import StructuredTool
-    from mcp_client import DiscoveredMCPTool, ToolCallTelemetry, bind_mcp_tools_for_user
+    from mcp_client import (
+        DiscoveredMCPTool,
+        StructuredTool,
+        ToolCallTelemetry,
+        bind_mcp_tools_for_user,
+    )
 
     backend_called = []
 

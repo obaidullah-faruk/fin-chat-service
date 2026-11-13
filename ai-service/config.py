@@ -1,3 +1,4 @@
+import os
 from pydantic import BaseModel, Field
 
 try:
@@ -5,7 +6,12 @@ try:
 except ImportError:
     class BaseSettings(BaseModel):  # type: ignore[no-redef]
         def __init__(self, **data):
-            super().__init__(**data)
+            fields = getattr(self.__class__, "model_fields", {})
+            env_vars = {
+                k.lower(): v for k, v in os.environ.items() if k.lower() in fields
+            }
+            env_vars.update(data)
+            super().__init__(**env_vars)
 
     def SettingsConfigDict(**kwargs):  # type: ignore[misc]
         return kwargs

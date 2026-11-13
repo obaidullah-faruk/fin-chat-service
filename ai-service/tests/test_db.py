@@ -4,6 +4,7 @@ from decimal import Decimal
 import uuid
 
 import pytest
+pytest.importorskip("sqlmodel")
 from sqlmodel import select
 
 from db.models import AgentRun, AgentTrace, LLMCall, RunStatus, ToolCall

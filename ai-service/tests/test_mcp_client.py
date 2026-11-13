@@ -1,7 +1,13 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from langchain_core.tools import StructuredTool, ToolException
+from mcp_client import StructuredTool
+
+try:
+    from langchain_core.tools import ToolException
+except ImportError:
+    class ToolException(Exception):  # type: ignore[no-redef]
+        pass
 import pytest
 
 import mcp_client

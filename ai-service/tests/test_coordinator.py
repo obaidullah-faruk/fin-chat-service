@@ -2,12 +2,14 @@ import asyncio
 from collections.abc import Sequence
 from typing import Any
 
+import pytest
+pytest.importorskip("langchain_core")
+
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import BaseTool, StructuredTool, ToolException
-import pytest
 
 from agents.coordinator import (
     IntentClassification,
