@@ -68,21 +68,35 @@ class MockMultiAgentLLM:
 def test_partition_tools_logic():
     t_bal = SimpleNamespace(name="get_balance")
     t_info = SimpleNamespace(name="get_account_info")
+    t_acct_lookup = SimpleNamespace(name="lookup_account")
+    t_dash = SimpleNamespace(name="get_bank_dashboard_summary")
     t_tx = SimpleNamespace(name="get_transactions")
     t_stmt = SimpleNamespace(name="get_statement")
+    t_tx_ref = SimpleNamespace(name="get_transaction_by_reference")
     t_chq = SimpleNamespace(name="request_cheque_book")
     t_addr = SimpleNamespace(name="update_address")
     t_kyc = SimpleNamespace(name="get_kyc_status")
+    t_cust = SimpleNamespace(name="lookup_customer")
+    t_rev = SimpleNamespace(name="get_pending_reviews")
 
-    all_tools = [t_bal, t_info, t_tx, t_stmt, t_chq, t_addr, t_kyc]
+    all_tools = [
+        t_bal, t_info, t_acct_lookup, t_dash,
+        t_tx, t_stmt, t_tx_ref,
+        t_chq, t_addr, t_kyc, t_cust, t_rev,
+    ]
     partitioned = _partition_tools(all_tools)  # type: ignore[arg-type]
 
-    assert len(partitioned["accounts"]) == 2
-    assert len(partitioned["transactions"]) == 2
-    assert len(partitioned["service"]) == 3
+    assert len(partitioned["accounts"]) == 4
+    assert len(partitioned["transactions"]) == 3
+    assert len(partitioned["service"]) == 5
     assert t_bal in partitioned["accounts"]
+    assert t_acct_lookup in partitioned["accounts"]
+    assert t_dash in partitioned["accounts"]
     assert t_tx in partitioned["transactions"]
+    assert t_tx_ref in partitioned["transactions"]
     assert t_chq in partitioned["service"]
+    assert t_cust in partitioned["service"]
+    assert t_rev in partitioned["service"]
 
 
 def test_route_by_intent_mapping():

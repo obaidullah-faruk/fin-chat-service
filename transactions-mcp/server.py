@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from tools.transaction_tools import get_statement, get_transactions
+from tools.transaction_tools import get_statement, get_transaction_by_reference, get_transactions
 
 
 class SuppressSSEClosedResourceFilter(logging.Filter):
@@ -25,6 +25,7 @@ logging.getLogger("mcp.server.streamable_http").addFilter(SuppressSSEClosedResou
 mcp = FastMCP("transactions-mcp")
 mcp.tool()(get_transactions)
 mcp.tool()(get_statement)
+mcp.tool()(get_transaction_by_reference)
 
 
 @mcp.custom_route("/health", methods=["GET"])

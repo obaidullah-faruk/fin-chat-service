@@ -12,11 +12,16 @@ def _get_django_config() -> tuple[str, str]:
     return django_url, internal_key
 
 
-async def _get_from_django(path: str, user_id: int) -> dict[str, Any]:
+async def _get_from_django(
+    path: str,
+    user_id: int,
+    params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     django_url, internal_key = _get_django_config()
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.get(
             f"{django_url}{path}",
+            params=params or None,
             headers={
                 "X-Internal-Key": internal_key,
                 "X-User-Id": str(user_id),
@@ -34,4 +39,18 @@ async def get_balance(user_id: int) -> dict[str, Any]:
 async def get_account_info(user_id: int) -> dict[str, Any]:
     """Get full bank account details including USD endorsement status, limit, holder name, and email for a user."""
     return await _get_from_django("/internal/banking/account-info/", user_id)
+
+
+async def lookup_account(user_id: int, query: str) -> dict[str, Any]:
+    """Look up a bank account by account number (e.g., FC1000000001) or holder username/name."""
+    return await _get_from_django(
+        "/internal/banking/account-lookup/",
+        user_id,
+        params={"query": query.strip()},
+    )
+
+
+async def get_bank_dashboard_summary(user_id: int) -> dict[str, Any]:
+    """Get institution-wide banking operations summary including total liquidity, customer counts, active/frozen account totals, and pending requests (Staff only)."""
+    return await _get_from_django("/internal/banking/dashboard-summary/", user_id)
 

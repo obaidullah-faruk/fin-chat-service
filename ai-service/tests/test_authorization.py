@@ -23,21 +23,31 @@ def test_customer_allowed_and_denied_tools():
     assert is_tool_allowed(ROLE_CUSTOMER, "get_account_info") is True
     assert is_tool_allowed(ROLE_CUSTOMER, "get_transactions") is True
     assert is_tool_allowed(ROLE_CUSTOMER, "get_statement") is True
+    assert is_tool_allowed(ROLE_CUSTOMER, "get_transaction_by_reference") is True
+    assert is_tool_allowed(ROLE_CUSTOMER, "lookup_account") is True
     assert is_tool_allowed(ROLE_CUSTOMER, "request_cheque_book") is True
 
     # Customer denied tools
     assert is_tool_allowed(ROLE_CUSTOMER, "update_address") is False
     assert is_tool_allowed(ROLE_CUSTOMER, "get_kyc_status") is False
+    assert is_tool_allowed(ROLE_CUSTOMER, "lookup_customer") is False
+    assert is_tool_allowed(ROLE_CUSTOMER, "get_bank_dashboard_summary") is False
+    assert is_tool_allowed(ROLE_CUSTOMER, "get_pending_reviews") is False
     assert is_tool_allowed(ROLE_CUSTOMER, "arbitrary_tool") is False
 
 
 def test_manager_allowed_tools():
-    # Manager has all customer tools + service manager tools
+    # Manager has all customer tools + service manager & staff tools
     for tool in [
         "get_balance",
         "get_account_info",
         "get_transactions",
         "get_statement",
+        "get_transaction_by_reference",
+        "lookup_account",
+        "lookup_customer",
+        "get_bank_dashboard_summary",
+        "get_pending_reviews",
         "request_cheque_book",
         "update_address",
         "get_kyc_status",

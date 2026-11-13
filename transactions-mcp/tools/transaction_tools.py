@@ -56,3 +56,16 @@ async def get_statement(
         params["end_date"] = end_date
     return await _get_from_django("/internal/banking/statement/", user_id, params=params)
 
+
+async def get_transaction_by_reference(
+    user_id: int,
+    reference: str,
+) -> dict[str, Any]:
+    """Get full details for a specific transaction by its unique reference ID (e.g., TXN-5E04875B25B1)."""
+    clean_ref = reference.strip()
+    return await _get_from_django(
+        "/internal/banking/transactions/lookup/",
+        user_id,
+        params={"reference": clean_ref},
+    )
+

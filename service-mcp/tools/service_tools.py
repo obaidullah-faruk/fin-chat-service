@@ -17,6 +17,7 @@ async def _request_django(
     path: str,
     user_id: int,
     json_body: dict[str, Any] | None = None,
+    params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     django_url, internal_key = _get_django_config()
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -24,6 +25,7 @@ async def _request_django(
             method,
             f"{django_url}{path}",
             json=json_body,
+            params=params or None,
             headers={
                 "X-Internal-Key": internal_key,
                 "X-User-Id": str(user_id),
@@ -85,7 +87,37 @@ async def update_address(
     )
 
 
-async def get_kyc_status(user_id: int) -> dict[str, Any]:
-    """Get a user's KYC verification completeness status, endorsement state, and missing profile fields."""
-    return await _request_django("GET", "/internal/service/kyc-status/", user_id)
+async def get_kyc_status(
+    user_id: int,
+    target_user_id: int | None = None,
+) -> dict[str, Any]:
+    """Get KYC verification completeness status, endorsement state, and missing profile fields for a user (or target customer if staff)."""
+    params = {"target_user_id": target_user_id} if target_user_id is not None else None
+    return await _request_django("GET", "/internal/service/kyc-status/", user_id, params=params)
+
+
+async def lookup_customer(
+    user_id: int,
+    query: str,
+) -> dict[str, Any]:
+    """Look up a customer profile, contact details, account status, and KYC info by username, name, email, or account number (Staff only)."""
+    return await _request_django(
+        "GET",
+        "/internal/service/customer-lookup/",
+        user_id,
+        params={"query": query.strip()},
+    )
+
+
+async def get_pending_reviews(
+    user_id: int,
+    review_type: str = "all",
+) -> dict[str, Any]:
+    """Retrieve pending review requests (cheque books, USD endorsements) awaiting managerial approval (Staff only; review_type: all, cheque, or endorsement)."""
+    return await _request_django(
+        "GET",
+        "/internal/service/pending-reviews/",
+        user_id,
+        params={"type": review_type.strip()},
+    )
 

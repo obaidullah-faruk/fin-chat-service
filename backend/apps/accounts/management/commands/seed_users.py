@@ -115,8 +115,16 @@ SEED_USERS = [
 class Command(BaseCommand):
     help = 'Seed RBAC roles, test users, and initial customer bank accounts'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--with-staff-accounts',
+            action='store_true',
+            help='Also create personal bank accounts for staff users (superadmin, manager1) for dual-mode testing.',
+        )
+
     @transaction.atomic
     def handle(self, *args, **options):
+        with_staff_accounts = options.get('with_staff_accounts', False)
         default_password = getattr(settings, 'SEED_DEFAULT_PASSWORD', 'Test@1234')
 
         roles = {}
@@ -181,6 +189,25 @@ class Command(BaseCommand):
                 addr_data = entry.get('address')
                 if addr_data:
                     Address.objects.create(user=user, is_primary=True, **addr_data)
+
+            if with_staff_accounts and not BankAccount.objects.filter(user=user).exists() and entry['role'] in (Role.Name.SUPERADMIN, Role.Name.MANAGER):
+                staff_acct = BankAccount.objects.create(
+                    user=user,
+                    account_type=BankAccount.AccountType.CURRENT,
+                    balance=Decimal('50000.00'),
+                    currency='USD',
+                )
+                Transaction.objects.create(
+                    account=staff_acct,
+                    transaction_type=Transaction.Type.DEPOSIT,
+                    channel=Transaction.Channel.SYSTEM,
+                    amount=Decimal('50000.00'),
+                    balance_after=Decimal('50000.00'),
+                    description='Seeded staff test opening balance',
+                )
+                self.stdout.write(
+                    self.style.NOTICE(f'Attached test bank account {staff_acct.account_number} to {user.username}')
+                )
 
         logger.info('Seed users completed', extra={'newly_created_users': created_count})
         self.stdout.write(

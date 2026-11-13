@@ -2,6 +2,7 @@ import { SmartToy as BotIcon } from '@mui/icons-material';
 import { Box, CircularProgress, Paper, Typography } from '@mui/material';
 import type { ChatMessage } from '../../types';
 import { ChatStatusPill, type StatusState } from './ChatStatusPill';
+import { MarkdownContent } from './MarkdownContent';
 
 interface StreamingCursorProps {
   tokens: string;
@@ -24,8 +25,8 @@ function StreamingBubble({ tokens }: StreamingCursorProps) {
           boxShadow: '0 1px 4px rgba(79, 70, 229, 0.08)',
         }}
       >
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-          {tokens}
+        <Box sx={{ display: 'inline' }}>
+          <MarkdownContent content={tokens} isUser={false} sx={{ display: 'inline' }} />
           <Box
             component="span"
             sx={{
@@ -42,7 +43,7 @@ function StreamingBubble({ tokens }: StreamingCursorProps) {
               },
             }}
           />
-        </Typography>
+        </Box>
       </Paper>
     </Box>
   );
@@ -68,9 +69,7 @@ function OptimisticUserMessage({ content }: OptimisticMessageProps) {
           opacity: 0.88,
         }}
       >
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-          {content}
-        </Typography>
+        <MarkdownContent content={content} isUser={true} />
         <Typography
           variant="caption"
           sx={{ display: 'block', mt: 0.5, opacity: 0.7, fontSize: '0.65rem', textAlign: 'right' }}
@@ -103,9 +102,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
           borderRadius: 2,
         }}
       >
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-          {message.content}
-        </Typography>
+        <MarkdownContent content={message.content} isUser={isUser} />
         <Typography
           variant="caption"
           sx={{

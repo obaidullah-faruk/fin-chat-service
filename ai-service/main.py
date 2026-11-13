@@ -26,7 +26,7 @@ from mcp_client import (
 )
 from schemas.chat import ChatRequest, ChatResponse
 from security.auth import verify_internal_caller
-from security.pii_redactor import redact_pii
+from security.pii_redactor import DEFAULT_REPLACEMENTS, redact_pii
 from streaming import StreamEventPublisher
 
 logger = logging.getLogger("finchat.ai_service")
@@ -159,7 +159,12 @@ async def process_chat(
         # ── PII scan ─────────────────────────────────────────────────────────
         await publisher.publish_status("pii_scan", "Scanning message for sensitive data (PII)...")
         redaction = redact_pii(payload.message)
+        pii_mapping: dict[str, str] = {}
         if redaction.has_pii:
+            for entity in redaction.entities:
+                placeholder = DEFAULT_REPLACEMENTS.get(entity.entity_type, "<REDACTED>")
+                pii_mapping[placeholder] = entity.text
+
             entity_types = [e.entity_type for e in redaction.entities]
             logger.info(
                 "PII:redacted user_id=%s session_id=%s entities=%s",
@@ -182,6 +187,7 @@ async def process_chat(
             role=payload.role,
             telemetry_records=tool_telemetry,
             publisher=publisher,
+            pii_mapping=pii_mapping,
         )
         total_tools = sum(len(v) for v in tools.values())
         logger.info(

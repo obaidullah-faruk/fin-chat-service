@@ -8,7 +8,12 @@ from fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from tools.account_tools import get_account_info, get_balance
+from tools.account_tools import (
+    get_account_info,
+    get_balance,
+    get_bank_dashboard_summary,
+    lookup_account,
+)
 
 
 class SuppressSSEClosedResourceFilter(logging.Filter):
@@ -25,6 +30,8 @@ logging.getLogger("mcp.server.streamable_http").addFilter(SuppressSSEClosedResou
 mcp = FastMCP("accounts-mcp")
 mcp.tool()(get_balance)
 mcp.tool()(get_account_info)
+mcp.tool()(lookup_account)
+mcp.tool()(get_bank_dashboard_summary)
 
 
 @mcp.custom_route("/health", methods=["GET"])

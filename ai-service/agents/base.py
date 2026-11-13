@@ -153,9 +153,20 @@ def build_agent_node(
     intent_default = node_name.replace("_agent", "")
 
     async def _agent_node(state: "CoordinatorState") -> "dict[str, Any]":
+        role = state.get("role", "customer")
+        raw_account = state.get("account_number")
+        if not raw_account:
+            account_display = (
+                "N/A (Staff / Administrative Operator - no personal retail account)"
+                if role in ("superadmin", "admin", "manager")
+                else "N/A"
+            )
+        else:
+            account_display = raw_account
+
         system_prompt = system_prompt_template.format(
-            role=state.get("role", "customer"),
-            account_number=state.get("account_number") or "N/A",
+            role=role,
+            account_number=account_display,
         )
         started = time.perf_counter()
         logger.debug(

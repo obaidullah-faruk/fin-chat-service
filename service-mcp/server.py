@@ -8,7 +8,13 @@ from fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from tools.service_tools import get_kyc_status, request_cheque_book, update_address
+from tools.service_tools import (
+    get_kyc_status,
+    get_pending_reviews,
+    lookup_customer,
+    request_cheque_book,
+    update_address,
+)
 
 
 class SuppressSSEClosedResourceFilter(logging.Filter):
@@ -26,6 +32,8 @@ mcp = FastMCP("service-mcp")
 mcp.tool()(request_cheque_book)
 mcp.tool()(update_address)
 mcp.tool()(get_kyc_status)
+mcp.tool()(lookup_customer)
+mcp.tool()(get_pending_reviews)
 
 
 @mcp.custom_route("/health", methods=["GET"])

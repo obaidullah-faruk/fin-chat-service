@@ -130,3 +130,32 @@ class InternalChequeServiceTests(APITestCase):
         )
         self.assertEqual(bad_addr.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_internal_pending_reviews_staff_only(self):
+        # Create a pending cheque request
+        self.client.post(
+            self.url,
+            {'leaves_requested': 25, 'remarks': 'Pending review test'},
+            format='json',
+            **self.valid_headers,
+        )
+
+        pending_url = reverse('internal-service-pending-reviews')
+        manager1 = CustomUser.objects.get(username='manager1')
+
+        # Manager can view pending items
+        resp_mgr = self.client.get(
+            pending_url,
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(manager1.id),
+        )
+        self.assertEqual(resp_mgr.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(resp_mgr.data['pending_cheques_count'], 1)
+
+        # Customer is denied
+        resp_cust = self.client.get(
+            pending_url,
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.customer1.id),
+        )
+        self.assertEqual(resp_cust.status_code, status.HTTP_403_FORBIDDEN)
+

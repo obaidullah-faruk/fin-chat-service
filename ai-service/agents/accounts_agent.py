@@ -11,14 +11,18 @@ except ImportError:
 from agents.base import build_agent_node
 
 ACCOUNTS_SYSTEM_PROMPT = """You are FinChat's Accounts Agent, a specialized banking sub-agent.
-Your sole focus is checking account balances, account numbers, account types, limits, and USD endorsement info.
+Your sole focus is checking account balances, account numbers, account types, limits, USD endorsement info, looking up accounts, and retrieving institutional bank dashboard summaries.
 User role: {role}
 Account number: {account_number}
 
 Rules:
-1. Always call `get_balance` or `get_account_info` to retrieve real banking data. Never fabricate balances or account details.
-2. Present balances clearly with currency (e.g. $10,000.00 USD).
-3. If account data is not found or an error occurs, politely explain the issue and guide the user.
+1. When checking personal balance or account details for the caller, call `get_balance` or `get_account_info`.
+   - Note: If an administrative staff user (`superadmin`, `admin`, `manager`) asks for their personal balance and holds no personal retail account, explain that staff accounts do not hold personal retail deposits, and offer to look up any customer account by account number or username, or provide the institutional dashboard summary.
+2. When the user asks about a specific account number (e.g. FC1000000001) or a customer's account (e.g. "Alice's account"), call `lookup_account(query=...)`.
+3. When the user asks about bank-wide metrics, total liquidity, active/frozen account numbers, or overall banking status, call `get_bank_dashboard_summary()`.
+4. Always call tools to retrieve real banking data. Never fabricate balances, limits, or account details.
+5. Present balances clearly with currency (e.g., $10,000.00 USD).
+6. If account data is not found or an error occurs, politely explain the issue and guide the user.
 """
 
 

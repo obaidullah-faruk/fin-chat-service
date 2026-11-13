@@ -226,8 +226,9 @@ def bind_mcp_tools_for_user(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> list[StructuredTool]:
-    """Wrap discovered MCP tools to inject verified user_id, check role authorization, and record telemetry."""
+    """Wrap discovered MCP tools to inject verified user_id, check role authorization, de-anonymize PII arguments, and record telemetry."""
     bound_tools: list[StructuredTool] = []
 
     for entry in discovered_tools:
@@ -240,6 +241,14 @@ def bind_mcp_tools_for_user(
             _server_name: str = server_name,
             **kwargs: Any,
         ) -> str:
+            # Restore any redacted PII tokens in tool arguments before internal invocation
+            if pii_mapping:
+                for k, v in list(kwargs.items()):
+                    if isinstance(v, str):
+                        for placeholder, original_val in pii_mapping.items():
+                            if placeholder in v:
+                                kwargs[k] = v.replace(placeholder, original_val)
+
             call_args = {**kwargs, "user_id": user_id}
             started = time.perf_counter()
 
@@ -364,6 +373,7 @@ async def get_user_mcp_tools(
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> list[StructuredTool]:
     """Get request-scoped MCP tools bound to verified user_id and checked against role."""
     tools_to_bind = (
@@ -377,6 +387,7 @@ async def get_user_mcp_tools(
         role=role,
         telemetry_records=telemetry_records,
         publisher=publisher,
+        pii_mapping=pii_mapping,
     )
 
 
@@ -402,6 +413,7 @@ async def get_domain_mcp_tools(
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> list[StructuredTool]:
     """Get MCP tools for a specific domain/server, bound to user_id and checked against role."""
     all_tools = (
@@ -416,6 +428,7 @@ async def get_domain_mcp_tools(
         role=role,
         telemetry_records=telemetry_records,
         publisher=publisher,
+        pii_mapping=pii_mapping,
     )
 
 
@@ -426,6 +439,7 @@ async def get_accounts_tools(
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> list[StructuredTool]:
     """Get tools scoped for Accounts Agent (get_balance, get_account_info)."""
     return await get_domain_mcp_tools(
@@ -435,6 +449,7 @@ async def get_accounts_tools(
         telemetry_records=telemetry_records,
         discovered_tools=discovered_tools,
         publisher=publisher,
+        pii_mapping=pii_mapping,
     )
 
 
@@ -445,6 +460,7 @@ async def get_transactions_tools(
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> list[StructuredTool]:
     """Get tools scoped for Transaction Agent (get_transactions, get_statement)."""
     return await get_domain_mcp_tools(
@@ -454,6 +470,7 @@ async def get_transactions_tools(
         telemetry_records=telemetry_records,
         discovered_tools=discovered_tools,
         publisher=publisher,
+        pii_mapping=pii_mapping,
     )
 
 
@@ -464,6 +481,7 @@ async def get_service_tools(
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> list[StructuredTool]:
     """Get tools scoped for Service Agent (request_cheque_book, update_address, get_kyc_status)."""
     return await get_domain_mcp_tools(
@@ -473,6 +491,7 @@ async def get_service_tools(
         telemetry_records=telemetry_records,
         discovered_tools=discovered_tools,
         publisher=publisher,
+        pii_mapping=pii_mapping,
     )
 
 
@@ -483,6 +502,7 @@ async def get_all_partitioned_mcp_tools(
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
     publisher: Any = None,
+    pii_mapping: dict[str, str] | None = None,
 ) -> dict[str, list[StructuredTool]]:
     """Return a dictionary of domain -> list of bound tools for all sub-agents."""
     all_discovered = (
@@ -498,6 +518,7 @@ async def get_all_partitioned_mcp_tools(
             role=role,
             telemetry_records=telemetry_records,
             publisher=publisher,
+            pii_mapping=pii_mapping,
         )
         for domain, tools in partitioned.items()
     }

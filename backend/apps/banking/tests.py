@@ -181,12 +181,17 @@ class BankingTests(APITestCase):
 class InternalBankingTests(APITestCase):
     def setUp(self):
         call_command('seed_users')
+        self.superadmin = CustomUser.objects.get(username='superadmin')
         self.customer1 = CustomUser.objects.get(username='customer1')
+        self.customer2 = CustomUser.objects.get(username='customer2')
         self.admin1 = CustomUser.objects.get(username='admin1')
         self.balance_url = reverse('internal-banking-balance')
         self.account_info_url = reverse('internal-banking-account-info')
         self.transactions_url = reverse('internal-banking-transactions')
         self.statement_url = reverse('internal-banking-statement')
+        self.lookup_url = reverse('internal-banking-transaction-lookup')
+        self.account_lookup_url = reverse('internal-banking-account-lookup')
+        self.dashboard_summary_url = reverse('internal-banking-dashboard-summary')
         self.valid_headers = {
             'HTTP_X_INTERNAL_KEY': 'test-internal-secret',
             'HTTP_X_USER_ID': str(self.customer1.id),
@@ -383,4 +388,81 @@ class InternalBankingTests(APITestCase):
             ).status_code,
             status.HTTP_400_BAD_REQUEST,
         )
+
+    def test_internal_transaction_lookup_staff_can_view_any_transaction(self):
+        txn = Transaction.objects.filter(account__user=self.customer1).first()
+        self.assertIsNotNone(txn)
+
+        # Superadmin has no bank account, but can look up customer1's transaction
+        resp = self.client.get(
+            f'{self.lookup_url}?reference={txn.reference}',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.superadmin.id),
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['reference'], txn.reference)
+        self.assertEqual(resp.data['account_number'], self.customer1.bank_account.account_number)
+
+    def test_internal_transaction_lookup_customer_privacy_isolation(self):
+        txn = Transaction.objects.filter(account__user=self.customer1).first()
+        self.assertIsNotNone(txn)
+
+        # Customer 1 can view own transaction
+        resp = self.client.get(
+            f'{self.lookup_url}?reference={txn.reference}',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.customer1.id),
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['reference'], txn.reference)
+
+        # Customer 2 cannot view Customer 1's transaction -> 404
+        resp_forbidden = self.client.get(
+            f'{self.lookup_url}?reference={txn.reference}',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.customer2.id),
+        )
+        self.assertEqual(resp_forbidden.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_internal_account_lookup_staff_vs_customer(self):
+        # Staff query gets balance and full holder details
+        resp_staff = self.client.get(
+            f'{self.account_lookup_url}?query=FC1000000001',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.admin1.id),
+        )
+        self.assertEqual(resp_staff.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_staff.data['account_number'], 'FC1000000001')
+        self.assertIn('balance', resp_staff.data)
+        self.assertEqual(resp_staff.data['holder_username'], 'customer1')
+
+        # Customer query gets safe recipient confirmation without balance
+        resp_cust = self.client.get(
+            f'{self.account_lookup_url}?query=FC1000000001',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.customer2.id),
+        )
+        self.assertEqual(resp_cust.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_cust.data['account_number'], 'FC1000000001')
+        self.assertNotIn('balance', resp_cust.data)
+        self.assertEqual(resp_cust.data['holder_name'], 'Alice Rahman')
+
+    def test_internal_dashboard_summary_staff_only(self):
+        # Staff can access
+        resp_staff = self.client.get(
+            self.dashboard_summary_url,
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.superadmin.id),
+        )
+        self.assertEqual(resp_staff.status_code, status.HTTP_200_OK)
+        self.assertIn('total_liquidity', resp_staff.data)
+        self.assertIn('total_customers', resp_staff.data)
+
+        # Retail customer denied
+        resp_cust = self.client.get(
+            self.dashboard_summary_url,
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(self.customer1.id),
+        )
+        self.assertEqual(resp_cust.status_code, status.HTTP_403_FORBIDDEN)
 

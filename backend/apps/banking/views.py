@@ -431,7 +431,7 @@ class StaffDashboardSummaryView(APIView):
             'pending_endorsements': Endorsement.objects.filter(
                 status=Endorsement.Status.PENDING
             ).count(),
-            'recent_transactions': TransactionSerializer(recent_txns, many=True).data,
+            'recent_transactions': recent_txns,
             'recent_activities': recent_activities,
         }
         serializer = StaffDashboardSummarySerializer(payload)

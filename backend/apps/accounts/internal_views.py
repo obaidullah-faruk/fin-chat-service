@@ -1,17 +1,19 @@
 import logging
 
 from django.db import transaction
-from drf_spectacular.utils import extend_schema
+from django.db.models import Q
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.banking.models import BankAccount
 from apps.endorsement.models import Endorsement
 from core.internal_auth import HasInternalAPIKey, get_internal_user
+from core.permissions import ROLE_ADMIN, ROLE_MANAGER, ROLE_SUPERADMIN
 from .audit import record_activity
-from .models import ActivityLog, Address, UserProfile
+from .models import ActivityLog, Address, CustomUser, UserProfile
 from .serializers import (
     AddressSerializer,
     InternalAddressUpsertSerializer,
@@ -101,15 +103,28 @@ class InternalAddressUpdateView(_BaseInternalServiceView):
 class InternalKYCStatusView(_BaseInternalServiceView):
     @extend_schema(
         tags=['Internal Service'],
+        parameters=[
+            OpenApiParameter('target_user_id', int, required=False),
+        ],
         responses=InternalKYCStatusSerializer,
     )
     def get(self, request):
         user = get_internal_user(request)
-        profile = UserProfile.objects.filter(user=user).first()
-        primary_address = Address.objects.filter(user=user, is_primary=True).first()
-        account = BankAccount.objects.filter(user=user).first()
+        role_name = getattr(user.role, 'name', '') if user.role else 'customer'
+        is_staff = role_name in (ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_MANAGER)
+
+        target_user = user
+        target_param = request.query_params.get('target_user_id') or request.query_params.get('user_id')
+        if is_staff and target_param and str(target_param).strip().isdigit():
+            found_user = CustomUser.objects.filter(pk=int(target_param)).first()
+            if found_user:
+                target_user = found_user
+
+        profile = UserProfile.objects.filter(user=target_user).first()
+        primary_address = Address.objects.filter(user=target_user, is_primary=True).first()
+        account = BankAccount.objects.filter(user=target_user).first()
         latest_endorsement = (
-            Endorsement.objects.filter(requester=user).order_by('-created_at').first()
+            Endorsement.objects.filter(requester=target_user).order_by('-created_at').first()
         )
 
         has_national_id = bool(profile and profile.national_id.strip())
@@ -128,18 +143,18 @@ class InternalKYCStatusView(_BaseInternalServiceView):
 
         if not missing_fields:
             kyc_status = 'verified'
-        elif has_national_id or has_date_of_birth or has_primary_address or bool(user.phone.strip()):
+        elif has_national_id or has_date_of_birth or has_primary_address or bool(target_user.phone.strip()):
             kyc_status = 'partial'
         else:
             kyc_status = 'incomplete'
 
         payload = {
-            'user_id': user.id,
-            'username': user.username,
-            'full_name': user.full_name,
-            'email': user.email,
-            'phone': user.phone,
-            'is_active': user.is_active,
+            'user_id': target_user.id,
+            'username': target_user.username,
+            'full_name': target_user.full_name,
+            'email': target_user.email,
+            'phone': target_user.phone,
+            'is_active': target_user.is_active,
             'kyc_status': kyc_status,
             'has_national_id': has_national_id,
             'has_date_of_birth': has_date_of_birth,
@@ -151,7 +166,77 @@ class InternalKYCStatusView(_BaseInternalServiceView):
         }
         logger.info(
             'Internal KYC status queried',
-            extra={'user_id': user.id, 'kyc_status': kyc_status},
+            extra={'user_id': user.id, 'target_user_id': target_user.id, 'kyc_status': kyc_status},
         )
         return Response(InternalKYCStatusSerializer(payload).data)
+
+
+class InternalCustomerLookupView(_BaseInternalServiceView):
+    @extend_schema(
+        tags=['Internal Service'],
+        parameters=[
+            OpenApiParameter('query', str, required=True),
+        ],
+    )
+    def get(self, request):
+        user = get_internal_user(request)
+        role_name = getattr(user.role, 'name', '') if user.role else 'customer'
+        is_staff = role_name in (ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_MANAGER)
+        if not is_staff:
+            raise PermissionDenied('Staff privileges required for customer lookup.')
+
+        raw_query = request.query_params.get('query', '').strip()
+        if not raw_query:
+            raise ValidationError({'detail': 'query parameter is required.'})
+
+        qs = CustomUser.objects.select_related('role', 'profile', 'bank_account')
+        target_user = None
+        if raw_query.isdigit():
+            target_user = qs.filter(pk=int(raw_query)).first()
+
+        if not target_user:
+            target_user = qs.filter(
+                Q(username__iexact=raw_query)
+                | Q(email__iexact=raw_query)
+                | Q(bank_account__account_number__iexact=raw_query)
+            ).first()
+
+        if not target_user:
+            target_user = qs.filter(
+                Q(username__icontains=raw_query)
+                | Q(first_name__icontains=raw_query)
+                | Q(last_name__icontains=raw_query)
+                | Q(email__icontains=raw_query)
+            ).first()
+
+        if not target_user:
+            raise NotFound(f"Customer matching '{raw_query}' not found.")
+
+        account = getattr(target_user, 'bank_account', None)
+        profile = getattr(target_user, 'profile', None)
+        primary_address = Address.objects.filter(user=target_user, is_primary=True).first()
+
+        data = {
+            'user_id': target_user.id,
+            'username': target_user.username,
+            'full_name': target_user.full_name,
+            'email': target_user.email,
+            'phone': target_user.phone,
+            'role': target_user.role.name if target_user.role else 'customer',
+            'is_active': target_user.is_active,
+            'account_number': account.account_number if account else None,
+            'account_type': account.account_type if account else None,
+            'balance': str(account.balance) if account else None,
+            'account_is_active': account.is_active if account else None,
+            'is_usd_endorsed': account.is_usd_endorsed if account else False,
+            'has_national_id': bool(profile and profile.national_id.strip()),
+            'primary_address': primary_address.city if primary_address else None,
+            'created_at': target_user.created_at.isoformat(),
+        }
+
+        logger.info(
+            'Internal customer lookup executed',
+            extra={'user_id': user.id, 'role': role_name, 'target_user_id': target_user.id},
+        )
+        return Response(data)
 

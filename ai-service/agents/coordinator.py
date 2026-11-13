@@ -55,11 +55,11 @@ from security.authorization import (
 
 IntentLabel = Literal["accounts", "transactions", "service", "unknown"]
 
-_INTENT_SYSTEM_PROMPT = """You are the routing coordinator for FinChat, a banking chatbot.
+_INTENT_SYSTEM_PROMPT = """You are the routing coordinator for FinChat, an enterprise banking assistant.
 Your only job is to classify the user's message into one of these intents:
-- "accounts": balance inquiry, account number, account status, account type, account details, USD endorsement info
-- "transactions": transaction history, past transactions, deposits, withdrawals, transfers, statement request
-- "service": cheque book request, change/update of address, KYC verification status, general banking service requests
+- "accounts": personal balance inquiry, account lookups by number/name (e.g., FC1000000001), account status/details, USD endorsement info, or bank-wide institutional liquidity and operational metrics/aggregates
+- "transactions": personal transaction history, specific transaction lookups by reference ID (e.g., TXN-5E04875B25B1), deposits, withdrawals, transfers, account statements
+- "service": cheque book requests, customer 360 profile lookups by name/username, pending approval review queries (cheques, endorsements), KYC status verification, change/update of address, general banking service requests
 - "unknown": anything that does not fit the banking intents above (greetings, casual chat, coding, general trivia)
 
 Provide an accurate intent, confidence score between 0.0 and 1.0, and a one-sentence reason."""
@@ -70,9 +70,12 @@ User role: {role}
 Account number: {account_number}
 
 Rules:
-1. Always call the appropriate tool(s) to retrieve real banking data or perform requested banking actions. Never fabricate balances, account numbers, transactions, or KYC statuses.
-2. When a tool returns data, present the answer clearly, accurately, and concisely in plain language.
-3. If a tool returns an error, explain the issue politely and tell the user what they can check or provide next."""
+1. Always call the appropriate tool(s) to retrieve real banking data or perform requested banking actions. Never fabricate balances, account numbers, transactions, customer profiles, or KYC statuses.
+2. Note on User Roles:
+   - For retail customers (`customer`), assist with their personal accounts and transactions.
+   - For administrative staff (`superadmin`, `admin`, `manager`), they do not have personal retail deposit accounts; assist them with cross-account lookups, transaction reference inquiries, customer 360 searches, and institutional summaries.
+3. When a tool returns data, present the answer clearly, accurately, and concisely in plain language.
+4. If a tool returns an error, explain the issue politely and tell the user what they can check or provide next."""
 
 _FALLBACK_REPLY = (
     "I can help with FinChat banking requests such as checking your account balance and details, "
@@ -115,9 +118,24 @@ def _partition_tools(
     if not tools:
         return partitioned
 
-    accounts_tools = {"get_balance", "get_account_info"}
-    transactions_tools = {"get_transactions", "get_statement"}
-    service_tools = {"request_cheque_book", "update_address", "get_kyc_status"}
+    accounts_tools = {
+        "get_balance",
+        "get_account_info",
+        "lookup_account",
+        "get_bank_dashboard_summary",
+    }
+    transactions_tools = {
+        "get_transactions",
+        "get_statement",
+        "get_transaction_by_reference",
+    }
+    service_tools = {
+        "request_cheque_book",
+        "update_address",
+        "get_kyc_status",
+        "lookup_customer",
+        "get_pending_reviews",
+    }
 
     for t in tools:
         name = getattr(t, "name", "")

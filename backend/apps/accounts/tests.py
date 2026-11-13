@@ -326,3 +326,36 @@ class InternalServiceAccountTests(APITestCase):
         self.assertTrue(verified_resp.data['has_date_of_birth'])
         self.assertEqual(verified_resp.data['missing_fields'], [])
 
+    def test_internal_customer_lookup_and_staff_kyc_query(self):
+        lookup_url = reverse('internal-service-customer-lookup')
+        superadmin = CustomUser.objects.get(username='superadmin')
+        customer2 = CustomUser.objects.get(username='customer2')
+
+        # Superadmin looks up customer1
+        resp_staff = self.client.get(
+            f'{lookup_url}?query=customer1',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(superadmin.id),
+        )
+        self.assertEqual(resp_staff.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_staff.data['username'], 'customer1')
+        self.assertEqual(resp_staff.data['account_number'], 'FC1000000001')
+        self.assertIsNotNone(resp_staff.data['balance'])
+
+        # Staff queries customer1 KYC via target_user_id
+        resp_kyc = self.client.get(
+            f'{self.kyc_url}?target_user_id={self.customer1.id}',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(superadmin.id),
+        )
+        self.assertEqual(resp_kyc.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_kyc.data['username'], 'customer1')
+
+        # Retail customer forbidden from customer lookup
+        resp_cust = self.client.get(
+            f'{lookup_url}?query=customer1',
+            HTTP_X_INTERNAL_KEY='test-internal-secret',
+            HTTP_X_USER_ID=str(customer2.id),
+        )
+        self.assertEqual(resp_cust.status_code, status.HTTP_403_FORBIDDEN)
+
