@@ -222,6 +222,7 @@ def bind_mcp_tools_for_user(
     user_id: int,
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
+    publisher: Any = None,
 ) -> list[StructuredTool]:
     """Wrap discovered MCP tools to inject verified user_id, check role authorization, and record telemetry."""
     bound_tools: list[StructuredTool] = []
@@ -239,12 +240,30 @@ def bind_mcp_tools_for_user(
             call_args = {**kwargs, "user_id": user_id}
             started = time.perf_counter()
 
+            if publisher is not None and hasattr(publisher, "publish_tool_start"):
+                try:
+                    await publisher.publish_tool_start(
+                        _base_tool.name,
+                        f"Executing banking tool '{_base_tool.name}'...",
+                    )
+                except Exception:
+                    pass
+
             # Defense-in-depth: Agent-level authorization check before tool invocation
             if role is not None:
                 try:
                     check_tool_authorization(role, _base_tool.name)
                 except Exception as auth_exc:
                     latency_ms = int((time.perf_counter() - started) * 1000)
+                    if publisher is not None and hasattr(publisher, "publish_tool_end"):
+                        try:
+                            await publisher.publish_tool_end(
+                                _base_tool.name,
+                                success=False,
+                                error_message=str(auth_exc),
+                            )
+                        except Exception:
+                            pass
                     if telemetry_records is not None:
                         telemetry_records.append(
                             ToolCallTelemetry(
@@ -263,6 +282,15 @@ def bind_mcp_tools_for_user(
                 raw_result = await _base_tool.ainvoke(call_args)
             except Exception as exc:
                 latency_ms = int((time.perf_counter() - started) * 1000)
+                if publisher is not None and hasattr(publisher, "publish_tool_end"):
+                    try:
+                        await publisher.publish_tool_end(
+                            _base_tool.name,
+                            success=False,
+                            error_message=str(exc),
+                        )
+                    except Exception:
+                        pass
                 if telemetry_records is not None:
                     telemetry_records.append(
                         ToolCallTelemetry(
@@ -279,6 +307,14 @@ def bind_mcp_tools_for_user(
 
             latency_ms = int((time.perf_counter() - started) * 1000)
             llm_text, output_dict = _normalize_tool_output(raw_result)
+            if publisher is not None and hasattr(publisher, "publish_tool_end"):
+                try:
+                    await publisher.publish_tool_end(
+                        _base_tool.name,
+                        success=True,
+                    )
+                except Exception:
+                    pass
             if telemetry_records is not None:
                 telemetry_records.append(
                     ToolCallTelemetry(
@@ -310,6 +346,7 @@ async def get_user_mcp_tools(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
+    publisher: Any = None,
 ) -> list[StructuredTool]:
     """Get request-scoped MCP tools bound to verified user_id and checked against role."""
     tools_to_bind = (
@@ -322,6 +359,7 @@ async def get_user_mcp_tools(
         user_id=user_id,
         role=role,
         telemetry_records=telemetry_records,
+        publisher=publisher,
     )
 
 
@@ -346,6 +384,7 @@ async def get_domain_mcp_tools(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
+    publisher: Any = None,
 ) -> list[StructuredTool]:
     """Get MCP tools for a specific domain/server, bound to user_id and checked against role."""
     all_tools = (
@@ -359,6 +398,7 @@ async def get_domain_mcp_tools(
         user_id=user_id,
         role=role,
         telemetry_records=telemetry_records,
+        publisher=publisher,
     )
 
 
@@ -368,6 +408,7 @@ async def get_accounts_tools(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
+    publisher: Any = None,
 ) -> list[StructuredTool]:
     """Get tools scoped for Accounts Agent (get_balance, get_account_info)."""
     return await get_domain_mcp_tools(
@@ -376,6 +417,7 @@ async def get_accounts_tools(
         role=role,
         telemetry_records=telemetry_records,
         discovered_tools=discovered_tools,
+        publisher=publisher,
     )
 
 
@@ -385,6 +427,7 @@ async def get_transactions_tools(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
+    publisher: Any = None,
 ) -> list[StructuredTool]:
     """Get tools scoped for Transaction Agent (get_transactions, get_statement)."""
     return await get_domain_mcp_tools(
@@ -393,6 +436,7 @@ async def get_transactions_tools(
         role=role,
         telemetry_records=telemetry_records,
         discovered_tools=discovered_tools,
+        publisher=publisher,
     )
 
 
@@ -402,6 +446,7 @@ async def get_service_tools(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
+    publisher: Any = None,
 ) -> list[StructuredTool]:
     """Get tools scoped for Service Agent (request_cheque_book, update_address, get_kyc_status)."""
     return await get_domain_mcp_tools(
@@ -410,6 +455,7 @@ async def get_service_tools(
         role=role,
         telemetry_records=telemetry_records,
         discovered_tools=discovered_tools,
+        publisher=publisher,
     )
 
 
@@ -419,6 +465,7 @@ async def get_all_partitioned_mcp_tools(
     role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
+    publisher: Any = None,
 ) -> dict[str, list[StructuredTool]]:
     """Return a dictionary of domain -> list of bound tools for all sub-agents."""
     all_discovered = (
@@ -433,6 +480,7 @@ async def get_all_partitioned_mcp_tools(
             user_id=user_id,
             role=role,
             telemetry_records=telemetry_records,
+            publisher=publisher,
         )
         for domain, tools in partitioned.items()
     }

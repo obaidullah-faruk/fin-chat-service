@@ -22,6 +22,7 @@ from mcp_client import (
 from schemas.chat import ChatRequest, ChatResponse
 from security.auth import verify_internal_caller
 from security.pii_redactor import redact_pii
+from streaming import StreamEventPublisher
 
 logger = logging.getLogger("finchat.ai_service")
 
@@ -107,10 +108,16 @@ async def process_chat(
         user_id=payload.user_id,
     )
     tool_telemetry: list[ToolCallTelemetry] = []
+    publisher = StreamEventPublisher(session_id=payload.session_id)
 
     try:
+        await publisher.publish_status("pii_scan", "Scanning message for sensitive data (PII)...")
         redaction = redact_pii(payload.message)
         if redaction.has_pii:
+            await publisher.publish_status(
+                "pii_redacted",
+                f"Sensitive data ({len(redaction.entities)} entities) redacted for privacy.",
+            )
             await repo.log_trace(
                 run_id=run.id,
                 agent_name="pii_redactor",
@@ -124,6 +131,7 @@ async def process_chat(
             user_id=payload.user_id,
             role=payload.role,
             telemetry_records=tool_telemetry,
+            publisher=publisher,
         )
         result = await run_coordinator(
             message=redaction.redacted_text,
@@ -133,6 +141,7 @@ async def process_chat(
             account_number=payload.account_number,
             tools=tools,
             checkpointer=get_checkpointer(),
+            publisher=publisher,
         )
         await _persist_run_telemetry(
             repo,
@@ -145,6 +154,11 @@ async def process_chat(
             status=RunStatus.COMPLETED,
             intent=result.intent,
         )
+        await publisher.publish_done(
+            reply=result.reply,
+            tools_called=result.tools_called,
+            intent=result.intent,
+        )
     except Exception as exc:
         logger.exception(
             "AI processing failed: run_id=%s user_id=%s session_id=%s",
@@ -152,6 +166,10 @@ async def process_chat(
             payload.user_id,
             payload.session_id,
         )
+        try:
+            await publisher.publish_error(str(exc))
+        except Exception:
+            pass
         for tool_call in tool_telemetry:
             try:
                 await repo.log_tool_call(
@@ -180,6 +198,11 @@ async def process_chat(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"AI processing failed: {exc}",
         ) from exc
+    finally:
+        try:
+            await publisher.close()
+        except Exception:
+            pass
 
     return ChatResponse(
         reply=result.reply,

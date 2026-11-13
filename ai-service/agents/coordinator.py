@@ -143,6 +143,7 @@ def build_coordinator_graph(
     tools: Sequence[BaseTool] | dict[str, Sequence[BaseTool]] | None = None,
     model_name: str = "gemini-3.8-flash",
     checkpointer: Any = None,
+    publisher: Any = None,
 ):
     """Build and compile the Phase 4 multi-agent supervisor LangGraph."""
     structured_classifier = llm.with_structured_output(
@@ -184,6 +185,16 @@ def build_coordinator_graph(
     async def classify_intent(state: CoordinatorState) -> dict[str, Any]:
         user_text = _last_user_message_text(state["messages"])
         started = time.perf_counter()
+
+        if publisher is not None and hasattr(publisher, "publish_status"):
+            try:
+                await publisher.publish_status(
+                    "routing",
+                    "Analyzing request and selecting banking sub-agent...",
+                )
+            except Exception:
+                pass
+
         result = await structured_classifier.ainvoke(
             [
                 SystemMessage(content=_INTENT_SYSTEM_PROMPT),
@@ -205,6 +216,17 @@ def build_coordinator_graph(
             parsed = IntentClassification.model_validate(result)
         else:
             raise RuntimeError(f"Unexpected classifier output type: {type(result).__name__}")
+
+        if publisher is not None and hasattr(publisher, "publish_status"):
+            try:
+                await publisher.publish_status(
+                    "routed",
+                    f"Routing request to {parsed.intent.title()} Agent ({parsed.confidence:.0%})...",
+                    intent=parsed.intent,
+                    confidence=float(parsed.confidence),
+                )
+            except Exception:
+                pass
 
         prompt_tokens, completion_tokens = _extract_token_usage(raw_msg)
         return {
@@ -244,6 +266,14 @@ def build_coordinator_graph(
         return "fallback_reply"
 
     async def fallback_reply(state: CoordinatorState) -> dict[str, Any]:
+        if publisher is not None and hasattr(publisher, "publish_token"):
+            words = _FALLBACK_REPLY.split(" ")
+            for i, word in enumerate(words):
+                chunk = word if i == len(words) - 1 else word + " "
+                try:
+                    await publisher.publish_token(chunk)
+                except Exception:
+                    pass
         return {
             "reply": _FALLBACK_REPLY,
             "traces": [
@@ -260,6 +290,14 @@ def build_coordinator_graph(
         reply_text = _extract_message_text(getattr(last_message, "content", ""))
         if not reply_text:
             reply_text = "I completed your request, but could not generate a formatted response."
+        if publisher is not None and hasattr(publisher, "publish_token"):
+            words = reply_text.split(" ")
+            for i, word in enumerate(words):
+                chunk = word if i == len(words) - 1 else word + " "
+                try:
+                    await publisher.publish_token(chunk)
+                except Exception:
+                    pass
         return {
             "reply": reply_text,
             "traces": [
@@ -352,6 +390,7 @@ async def run_coordinator(
     llm: BaseChatModel | None = None,
     settings: Settings | None = None,
     checkpointer: Any = None,
+    publisher: Any = None,
 ) -> CoordinatorResult:
     """Execute the multi-agent coordinator graph for one chat request."""
     cfg = settings or get_settings()
@@ -359,7 +398,11 @@ async def run_coordinator(
     active_tools = (
         tools
         if tools is not None
-        else await get_all_partitioned_mcp_tools(user_id=user_id, role=role)
+        else await get_all_partitioned_mcp_tools(
+            user_id=user_id,
+            role=role,
+            publisher=publisher,
+        )
     )
     model_name = (
         getattr(model, "model", None)
@@ -372,6 +415,7 @@ async def run_coordinator(
         tools=active_tools,
         model_name=str(model_name),
         checkpointer=checkpointer,
+        publisher=publisher,
     )
 
     invoke_config: dict[str, Any] = {"recursion_limit": 12}

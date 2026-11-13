@@ -1,9 +1,26 @@
-import { apiClient } from './client';
+import { API_BASE_URL, apiClient } from './client';
 import type { ChatMessage, ChatSession } from '../types';
 
 export interface SendMessageResponse {
   user_message: ChatMessage;
   assistant_message: ChatMessage;
+}
+
+export function getChatWebSocketUrl(sessionId: number, token: string): string {
+  let wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  let host = window.location.host;
+
+  if (API_BASE_URL.startsWith('http://') || API_BASE_URL.startsWith('https://')) {
+    try {
+      const parsed = new URL(API_BASE_URL);
+      wsProto = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      host = parsed.host;
+    } catch {
+      // Keep default host
+    }
+  }
+
+  return `${wsProto}//${host}/ws/chat/${sessionId}/?token=${encodeURIComponent(token)}`;
 }
 
 export const chatApi = {

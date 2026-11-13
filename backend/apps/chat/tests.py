@@ -105,3 +105,95 @@ class ChatTests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
 
+class WebSocketChatTests(APITestCase):
+    def setUp(self):
+        call_command('seed_users')
+        from django.contrib.auth import get_user_model
+        from rest_framework_simplejwt.tokens import AccessToken
+        from apps.chat.models import ChatSession
+
+        User = get_user_model()
+        self.customer1 = User.objects.get(username='customer1')
+        self.customer2 = User.objects.get(username='customer2')
+        self.token1 = str(AccessToken.for_user(self.customer1))
+        self.session1 = ChatSession.objects.create(user=self.customer1, title='Test Session')
+
+    def test_path_regex_matching(self):
+        from apps.chat.websocket import WS_PATH_REGEX
+        m1 = WS_PATH_REGEX.match('/ws/chat/1/')
+        self.assertIsNotNone(m1)
+        self.assertEqual(m1.group('session_id'), '1')
+
+        m2 = WS_PATH_REGEX.match('/ws/chat/42')
+        self.assertIsNotNone(m2)
+        self.assertEqual(m2.group('session_id'), '42')
+
+        self.assertIsNone(WS_PATH_REGEX.match('/ws/chat/abc/'))
+        self.assertIsNone(WS_PATH_REGEX.match('/api/v1/chat/'))
+
+    async def test_websocket_rejects_missing_token(self):
+        from apps.chat.websocket import chat_websocket_application
+
+        scope = {
+            'type': 'websocket',
+            'path': f'/ws/chat/{self.session1.id}/',
+            'query_string': b'',
+        }
+        sent_events = []
+
+        async def fake_send(ev):
+            sent_events.append(ev)
+
+        async def fake_receive():
+            return {'type': 'websocket.disconnect'}
+
+        await chat_websocket_application(scope, fake_receive, fake_send)
+        self.assertEqual(len(sent_events), 1)
+        self.assertEqual(sent_events[0]['type'], 'websocket.close')
+        self.assertEqual(sent_events[0]['code'], 4001)
+
+    async def test_websocket_rejects_invalid_token(self):
+        from apps.chat.websocket import chat_websocket_application
+
+        scope = {
+            'type': 'websocket',
+            'path': f'/ws/chat/{self.session1.id}/',
+            'query_string': b'token=invalid_expired_token',
+        }
+        sent_events = []
+
+        async def fake_send(ev):
+            sent_events.append(ev)
+
+        async def fake_receive():
+            return {'type': 'websocket.disconnect'}
+
+        await chat_websocket_application(scope, fake_receive, fake_send)
+        self.assertEqual(len(sent_events), 1)
+        self.assertEqual(sent_events[0]['type'], 'websocket.close')
+        self.assertEqual(sent_events[0]['code'], 4001)
+
+    async def test_websocket_rejects_other_user_session(self):
+        from apps.chat.websocket import chat_websocket_application
+        from rest_framework_simplejwt.tokens import AccessToken
+
+        token2 = str(AccessToken.for_user(self.customer2))
+        scope = {
+            'type': 'websocket',
+            'path': f'/ws/chat/{self.session1.id}/',
+            'query_string': f'token={token2}'.encode('utf-8'),
+        }
+        sent_events = []
+
+        async def fake_send(ev):
+            sent_events.append(ev)
+
+        async def fake_receive():
+            return {'type': 'websocket.disconnect'}
+
+        await chat_websocket_application(scope, fake_receive, fake_send)
+        self.assertEqual(len(sent_events), 1)
+        self.assertEqual(sent_events[0]['type'], 'websocket.close')
+        self.assertEqual(sent_events[0]['code'], 4004)
+
+

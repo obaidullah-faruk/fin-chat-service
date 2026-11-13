@@ -148,6 +148,7 @@ SEED_DEFAULT_PASSWORD = config('SEED_DEFAULT_PASSWORD', default='Test@1234')
 
 INTERNAL_API_KEY = config('INTERNAL_API_KEY', default='')
 AI_SERVICE_URL = config('AI_SERVICE_URL', default='http://ai-service:8001')
+REDIS_URL = config('REDIS_URL', default='redis://redis:6379/0')
 
 LOGGING = {
     'version': 1,

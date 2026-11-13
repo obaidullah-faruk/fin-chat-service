@@ -234,6 +234,52 @@ export interface ChatMessage {
   created_at: string;
 }
 
+export interface StreamStatusEvent {
+  type: 'status';
+  stage: string;
+  message: string;
+  intent?: string;
+  confidence?: number;
+}
+
+export interface StreamToolStartEvent {
+  type: 'tool_call_start';
+  tool_name: string;
+  message: string;
+}
+
+export interface StreamToolEndEvent {
+  type: 'tool_call_end';
+  tool_name: string;
+  success: boolean;
+  error_message?: string;
+}
+
+export interface StreamTokenEvent {
+  type: 'token';
+  token: string;
+}
+
+export interface StreamDoneEvent {
+  type: 'done';
+  reply: string;
+  tools_called: string[];
+  intent: string;
+}
+
+export interface StreamErrorEvent {
+  type: 'error';
+  error: string;
+}
+
+export type StreamEvent =
+  | StreamStatusEvent
+  | StreamToolStartEvent
+  | StreamToolEndEvent
+  | StreamTokenEvent
+  | StreamDoneEvent
+  | StreamErrorEvent;
+
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
