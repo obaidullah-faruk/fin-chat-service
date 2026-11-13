@@ -82,7 +82,9 @@ class StreamEventPublisher:
             {
                 "type": "tool_call_start",
                 "tool_name": tool_name,
-                "message": message or f"Executing banking tool '{tool_name}'...",
+                # The frontend maps tool_name to a user-friendly message.
+                # The message field here is a server-side fallback only.
+                "message": message or "Retrieving banking data...",
                 **extra,
             }
         )

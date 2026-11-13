@@ -3,8 +3,11 @@ from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 import json
+import logging
 import time
 from typing import Any
+
+logger = logging.getLogger("finchat.mcp_client")
 
 try:
     from fastmcp import Client
@@ -240,12 +243,14 @@ def bind_mcp_tools_for_user(
             call_args = {**kwargs, "user_id": user_id}
             started = time.perf_counter()
 
+            logger.debug(
+                "TOOL:invoke tool=%s server=%s user_id=%s",
+                _base_tool.name, _server_name, user_id,
+            )
+
             if publisher is not None and hasattr(publisher, "publish_tool_start"):
                 try:
-                    await publisher.publish_tool_start(
-                        _base_tool.name,
-                        f"Executing banking tool '{_base_tool.name}'...",
-                    )
+                    await publisher.publish_tool_start(_base_tool.name)
                 except Exception:
                     pass
 
@@ -255,6 +260,10 @@ def bind_mcp_tools_for_user(
                     check_tool_authorization(role, _base_tool.name)
                 except Exception as auth_exc:
                     latency_ms = int((time.perf_counter() - started) * 1000)
+                    logger.warning(
+                        "TOOL:auth_denied tool=%s role=%s user_id=%s latency_ms=%d",
+                        _base_tool.name, role, user_id, latency_ms,
+                    )
                     if publisher is not None and hasattr(publisher, "publish_tool_end"):
                         try:
                             await publisher.publish_tool_end(
@@ -282,6 +291,10 @@ def bind_mcp_tools_for_user(
                 raw_result = await _base_tool.ainvoke(call_args)
             except Exception as exc:
                 latency_ms = int((time.perf_counter() - started) * 1000)
+                logger.error(
+                    "TOOL:failed tool=%s server=%s user_id=%s latency_ms=%d error=%s",
+                    _base_tool.name, _server_name, user_id, latency_ms, exc,
+                )
                 if publisher is not None and hasattr(publisher, "publish_tool_end"):
                     try:
                         await publisher.publish_tool_end(
@@ -307,6 +320,10 @@ def bind_mcp_tools_for_user(
 
             latency_ms = int((time.perf_counter() - started) * 1000)
             llm_text, output_dict = _normalize_tool_output(raw_result)
+            logger.info(
+                "TOOL:success tool=%s server=%s user_id=%s latency_ms=%d output_len=%d",
+                _base_tool.name, _server_name, user_id, latency_ms, len(llm_text),
+            )
             if publisher is not None and hasattr(publisher, "publish_tool_end"):
                 try:
                     await publisher.publish_tool_end(

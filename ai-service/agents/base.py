@@ -1,8 +1,11 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+import logging
 import operator
 import time
 from typing import Annotated, Any, TypedDict
+
+logger = logging.getLogger("finchat.agents")
 
 try:
     from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
@@ -125,3 +128,86 @@ def last_user_message_text(messages: Sequence[AnyMessage]) -> str:
         if getattr(msg, "type", None) == "human" or type(msg).__name__ == "HumanMessage":
             return extract_message_text(getattr(msg, "content", ""))
     return extract_message_text(getattr(messages[-1], "content", "")) if messages else ""
+
+
+def build_agent_node(
+    *,
+    llm: Any,
+    tools: Sequence[Any],
+    system_prompt_template: str,
+    node_name: str,
+    model_name: str = "gemini-3.8-flash",
+) -> Callable[["CoordinatorState"], "dict[str, Any]"]:
+    """
+    Factory that builds a typed LangGraph agent node function.
+
+    Eliminates the near-identical boilerplate in accounts_agent, transaction_agent,
+    and service_agent by parametrising only what differs between them:
+    - ``system_prompt_template``: An f-string template with ``{role}`` and
+      ``{account_number}`` placeholders.
+    - ``node_name``: Used for telemetry logging and the ``intent`` default.
+
+    Returns an ``async`` callable suitable for ``graph.add_node()``.
+    """
+    llm_with_tools = llm.bind_tools(list(tools)) if tools and hasattr(llm, "bind_tools") else llm
+    intent_default = node_name.replace("_agent", "")
+
+    async def _agent_node(state: "CoordinatorState") -> "dict[str, Any]":
+        system_prompt = system_prompt_template.format(
+            role=state.get("role", "customer"),
+            account_number=state.get("account_number") or "N/A",
+        )
+        started = time.perf_counter()
+        logger.debug(
+            "AGENT:invoke node=%s user_id=%s session_id=%s",
+            node_name, state.get("user_id"), state.get("session_id"),
+        )
+        response = await llm_with_tools.ainvoke(
+            [SystemMessage(content=system_prompt), *state["messages"]]
+        )
+        latency_ms = int((time.perf_counter() - started) * 1000)
+
+        prompt_tokens, completion_tokens = extract_token_usage(response)
+        requested_tools = [
+            tc["name"]
+            for tc in (getattr(response, "tool_calls", None) or [])
+            if isinstance(tc, dict) and tc.get("name")
+        ]
+
+        logger.info(
+            "AGENT:done node=%s user_id=%s latency_ms=%d prompt_tokens=%d "
+            "completion_tokens=%d tools_requested=%s",
+            node_name, state.get("user_id"), latency_ms,
+            prompt_tokens, completion_tokens, requested_tools,
+        )
+
+        return {
+            "messages": [response],
+            "tools_called": requested_tools,
+            "llm_calls": [
+                LLMCallTelemetry(
+                    node_name=node_name,
+                    model_name=model_name,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    latency_ms=latency_ms,
+                )
+            ],
+            "traces": [
+                TraceTelemetry(
+                    agent_name=node_name,
+                    input_state={
+                        "intent": state.get("intent", intent_default),
+                        "message_count": len(state["messages"]),
+                    },
+                    output_state={
+                        "tools_requested": requested_tools,
+                        "has_final_text": bool(
+                            extract_message_text(getattr(response, "content", ""))
+                        ),
+                    },
+                )
+            ],
+        }
+
+    return _agent_node
