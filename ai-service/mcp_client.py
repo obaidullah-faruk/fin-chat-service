@@ -11,6 +11,11 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from pydantic import BaseModel
 
 from config import get_settings
+from security.authorization import (
+    ToolAuthorizationError,
+    check_tool_authorization,
+    is_tool_allowed,
+)
 
 
 def get_mcp_server_urls() -> dict[str, str]:
@@ -170,9 +175,10 @@ def bind_mcp_tools_for_user(
     discovered_tools: list[DiscoveredMCPTool],
     *,
     user_id: int,
+    role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
 ) -> list[StructuredTool]:
-    """Wrap discovered MCP tools to inject verified user_id and record telemetry."""
+    """Wrap discovered MCP tools to inject verified user_id, check role authorization, and record telemetry."""
     bound_tools: list[StructuredTool] = []
 
     for entry in discovered_tools:
@@ -187,6 +193,27 @@ def bind_mcp_tools_for_user(
         ) -> str:
             call_args = {**kwargs, "user_id": user_id}
             started = time.perf_counter()
+
+            # Defense-in-depth: Agent-level authorization check before tool invocation
+            if role is not None:
+                try:
+                    check_tool_authorization(role, _base_tool.name)
+                except Exception as auth_exc:
+                    latency_ms = int((time.perf_counter() - started) * 1000)
+                    if telemetry_records is not None:
+                        telemetry_records.append(
+                            ToolCallTelemetry(
+                                tool_name=_base_tool.name,
+                                mcp_server=_server_name,
+                                input_json=call_args,
+                                output_json={},
+                                latency_ms=latency_ms,
+                                success=False,
+                                error_message=str(auth_exc),
+                            )
+                        )
+                    raise
+
             try:
                 raw_result = await _base_tool.ainvoke(call_args)
             except Exception as exc:
@@ -235,10 +262,11 @@ def bind_mcp_tools_for_user(
 async def get_user_mcp_tools(
     *,
     user_id: int,
+    role: str | None = None,
     telemetry_records: list[ToolCallTelemetry] | None = None,
     discovered_tools: list[DiscoveredMCPTool] | None = None,
 ) -> list[StructuredTool]:
-    """Get request-scoped MCP tools bound to the verified user_id."""
+    """Get request-scoped MCP tools bound to verified user_id and checked against role."""
     tools_to_bind = (
         discovered_tools
         if discovered_tools is not None
@@ -247,6 +275,7 @@ async def get_user_mcp_tools(
     return bind_mcp_tools_for_user(
         tools_to_bind,
         user_id=user_id,
+        role=role,
         telemetry_records=telemetry_records,
     )
 

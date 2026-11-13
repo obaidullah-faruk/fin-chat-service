@@ -108,6 +108,7 @@ async def process_chat(
 
         tools = await get_user_mcp_tools(
             user_id=payload.user_id,
+            role=payload.role,
             telemetry_records=tool_telemetry,
         )
         result = await run_coordinator(

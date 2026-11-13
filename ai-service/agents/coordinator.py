@@ -15,6 +15,12 @@ from pydantic import BaseModel, Field
 
 from config import Settings, get_settings
 from mcp_client import get_user_mcp_tools
+from security.authorization import (
+    ROLE_PERMISSIONS,
+    ToolAuthorizationError,
+    check_tool_authorization,
+    is_tool_allowed,
+)
 
 IntentLabel = Literal["accounts", "transactions", "service", "unknown"]
 
@@ -342,7 +348,7 @@ async def run_coordinator(
     active_tools = (
         list(tools)
         if tools is not None
-        else await get_user_mcp_tools(user_id=user_id)
+        else await get_user_mcp_tools(user_id=user_id, role=role)
     )
     model_name = (
         getattr(model, "model", None)

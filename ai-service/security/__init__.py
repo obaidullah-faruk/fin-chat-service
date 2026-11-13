@@ -3,6 +3,18 @@ try:
 except ImportError:
     verify_internal_caller = None  # type: ignore[assignment]
 
+from security.authorization import (
+    ROLE_ADMIN,
+    ROLE_CUSTOMER,
+    ROLE_MANAGER,
+    ROLE_PERMISSIONS,
+    ROLE_SUPERADMIN,
+    ToolAuthorizationError,
+    check_tool_authorization,
+    filter_tools_for_role,
+    get_role_permissions,
+    is_tool_allowed,
+)
 from security.pii_redactor import (
     BasePIIRedactor,
     PresidioPIIRedactor,
@@ -18,6 +30,16 @@ from security.pii_redactor import (
 
 __all__ = [
     "verify_internal_caller",
+    "ROLE_CUSTOMER",
+    "ROLE_MANAGER",
+    "ROLE_ADMIN",
+    "ROLE_SUPERADMIN",
+    "ROLE_PERMISSIONS",
+    "ToolAuthorizationError",
+    "is_tool_allowed",
+    "check_tool_authorization",
+    "get_role_permissions",
+    "filter_tools_for_role",
     "BasePIIRedactor",
     "PresidioPIIRedactor",
     "RegexPIIRedactor",
