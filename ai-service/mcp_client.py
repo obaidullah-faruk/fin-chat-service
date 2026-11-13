@@ -1,13 +1,20 @@
 import asyncio
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 import json
 import time
 from typing import Any
 
-from fastmcp import Client
-from langchain_core.tools import BaseTool, StructuredTool
-from langchain_mcp_adapters.client import MultiServerMCPClient
+try:
+    from fastmcp import Client
+    from langchain_core.tools import BaseTool, StructuredTool
+    from langchain_mcp_adapters.client import MultiServerMCPClient
+except ImportError:
+    Client = Any  # type: ignore[assignment,misc]
+    BaseTool = Any  # type: ignore[assignment,misc]
+    StructuredTool = Any  # type: ignore[assignment,misc]
+    MultiServerMCPClient = Any  # type: ignore[assignment,misc]
 from pydantic import BaseModel
 
 from config import get_settings
@@ -278,6 +285,119 @@ async def get_user_mcp_tools(
         role=role,
         telemetry_records=telemetry_records,
     )
+
+
+def partition_mcp_tools_by_domain(
+    discovered_tools: Sequence[DiscoveredMCPTool],
+) -> dict[str, list[DiscoveredMCPTool]]:
+    """Group discovered MCP tools by their parent server domain name."""
+    partitioned: dict[str, list[DiscoveredMCPTool]] = {
+        "accounts": [],
+        "transactions": [],
+        "service": [],
+    }
+    for item in discovered_tools:
+        partitioned.setdefault(item.server_name, []).append(item)
+    return partitioned
+
+
+async def get_domain_mcp_tools(
+    domain: str,
+    *,
+    user_id: int,
+    role: str | None = None,
+    telemetry_records: list[ToolCallTelemetry] | None = None,
+    discovered_tools: list[DiscoveredMCPTool] | None = None,
+) -> list[StructuredTool]:
+    """Get MCP tools for a specific domain/server, bound to user_id and checked against role."""
+    all_tools = (
+        discovered_tools
+        if discovered_tools is not None
+        else await get_discovered_mcp_tools()
+    )
+    domain_tools = [t for t in all_tools if t.server_name == domain]
+    return bind_mcp_tools_for_user(
+        domain_tools,
+        user_id=user_id,
+        role=role,
+        telemetry_records=telemetry_records,
+    )
+
+
+async def get_accounts_tools(
+    *,
+    user_id: int,
+    role: str | None = None,
+    telemetry_records: list[ToolCallTelemetry] | None = None,
+    discovered_tools: list[DiscoveredMCPTool] | None = None,
+) -> list[StructuredTool]:
+    """Get tools scoped for Accounts Agent (get_balance, get_account_info)."""
+    return await get_domain_mcp_tools(
+        "accounts",
+        user_id=user_id,
+        role=role,
+        telemetry_records=telemetry_records,
+        discovered_tools=discovered_tools,
+    )
+
+
+async def get_transactions_tools(
+    *,
+    user_id: int,
+    role: str | None = None,
+    telemetry_records: list[ToolCallTelemetry] | None = None,
+    discovered_tools: list[DiscoveredMCPTool] | None = None,
+) -> list[StructuredTool]:
+    """Get tools scoped for Transaction Agent (get_transactions, get_statement)."""
+    return await get_domain_mcp_tools(
+        "transactions",
+        user_id=user_id,
+        role=role,
+        telemetry_records=telemetry_records,
+        discovered_tools=discovered_tools,
+    )
+
+
+async def get_service_tools(
+    *,
+    user_id: int,
+    role: str | None = None,
+    telemetry_records: list[ToolCallTelemetry] | None = None,
+    discovered_tools: list[DiscoveredMCPTool] | None = None,
+) -> list[StructuredTool]:
+    """Get tools scoped for Service Agent (request_cheque_book, update_address, get_kyc_status)."""
+    return await get_domain_mcp_tools(
+        "service",
+        user_id=user_id,
+        role=role,
+        telemetry_records=telemetry_records,
+        discovered_tools=discovered_tools,
+    )
+
+
+async def get_all_partitioned_mcp_tools(
+    *,
+    user_id: int,
+    role: str | None = None,
+    telemetry_records: list[ToolCallTelemetry] | None = None,
+    discovered_tools: list[DiscoveredMCPTool] | None = None,
+) -> dict[str, list[StructuredTool]]:
+    """Return a dictionary of domain -> list of bound tools for all sub-agents."""
+    all_discovered = (
+        discovered_tools
+        if discovered_tools is not None
+        else await get_discovered_mcp_tools()
+    )
+    partitioned = partition_mcp_tools_by_domain(all_discovered)
+    return {
+        domain: bind_mcp_tools_for_user(
+            tools,
+            user_id=user_id,
+            role=role,
+            telemetry_records=telemetry_records,
+        )
+        for domain, tools in partitioned.items()
+    }
 
 
 def _extract_tool_payload(result: Any) -> dict[str, Any]:

@@ -4,15 +4,40 @@ import operator
 import time
 from typing import Annotated, Any, Literal, TypedDict
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
-from langchain_core.tools import BaseTool, ToolException
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langgraph.graph import END, START, StateGraph
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
+try:
+    from langchain_core.language_models.chat_models import BaseChatModel
+    from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
+    from langchain_core.tools import BaseTool, ToolException
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langgraph.graph import END, START, StateGraph
+    from langgraph.graph.message import add_messages
+    from langgraph.prebuilt import ToolNode, tools_condition
+except ImportError:
+    BaseChatModel = Any  # type: ignore[assignment,misc]
+    AnyMessage = Any  # type: ignore[assignment,misc]
+    HumanMessage = Any  # type: ignore[assignment,misc]
+    SystemMessage = Any  # type: ignore[assignment,misc]
+    BaseTool = Any  # type: ignore[assignment,misc]
+    ToolException = Exception  # type: ignore[assignment,misc]
+    ChatGoogleGenerativeAI = Any  # type: ignore[assignment,misc]
+    END = "__end__"  # type: ignore[assignment,misc]
+    START = "__start__"  # type: ignore[assignment,misc]
+    StateGraph = Any  # type: ignore[assignment,misc]
+    add_messages = lambda a, b: a + b  # type: ignore[assignment,misc]
+    ToolNode = Any  # type: ignore[assignment,misc]
+    tools_condition = Any  # type: ignore[assignment,misc]
+
 from pydantic import BaseModel, Field
 
+from agents.base import (
+    CoordinatorResult,
+    CoordinatorState,
+    LLMCallTelemetry,
+    TraceTelemetry,
+    extract_message_text as _extract_message_text,
+    extract_token_usage as _extract_token_usage,
+    last_user_message_text as _last_user_message_text,
+)
 from config import Settings, get_settings
 from mcp_client import get_user_mcp_tools
 from security.authorization import (
@@ -56,48 +81,6 @@ class IntentClassification(BaseModel):
     reason: str = Field(min_length=1)
 
 
-@dataclass(slots=True)
-class LLMCallTelemetry:
-    node_name: str
-    model_name: str
-    prompt_tokens: int
-    completion_tokens: int
-    latency_ms: int
-
-
-@dataclass(slots=True)
-class TraceTelemetry:
-    agent_name: str
-    input_state: dict[str, Any]
-    output_state: dict[str, Any]
-
-
-@dataclass(slots=True)
-class CoordinatorResult:
-    reply: str
-    intent: str
-    confidence: float
-    reason: str
-    tools_called: list[str] = field(default_factory=list)
-    llm_calls: list[LLMCallTelemetry] = field(default_factory=list)
-    traces: list[TraceTelemetry] = field(default_factory=list)
-
-
-class CoordinatorState(TypedDict):
-    messages: Annotated[list[AnyMessage], add_messages]
-    user_id: int
-    role: str
-    account_number: str | None
-    session_id: int
-    intent: str
-    confidence: float
-    reason: str
-    reply: str
-    tools_called: Annotated[list[str], operator.add]
-    llm_calls: Annotated[list[LLMCallTelemetry], operator.add]
-    traces: Annotated[list[TraceTelemetry], operator.add]
-
-
 def create_gemini_llm(settings: Settings | None = None) -> ChatGoogleGenerativeAI:
     cfg = settings or get_settings()
     api_key = cfg.require_gemini_api_key()
@@ -106,53 +89,6 @@ def create_gemini_llm(settings: Settings | None = None) -> ChatGoogleGenerativeA
         temperature=cfg.gemini_temperature,
         google_api_key=api_key,
     )
-
-
-def _extract_message_text(content: Any) -> str:
-    if isinstance(content, str):
-        return content.strip()
-    if isinstance(content, list):
-        parts: list[str] = []
-        for block in content:
-            if isinstance(block, str):
-                parts.append(block)
-            elif isinstance(block, dict) and isinstance(block.get("text"), str):
-                parts.append(block["text"])
-        return "\n".join(part for part in parts if part).strip()
-    if content is None:
-        return ""
-    return str(content).strip()
-
-
-def _extract_token_usage(message: Any) -> tuple[int, int]:
-    usage = getattr(message, "usage_metadata", None)
-    if isinstance(usage, dict):
-        return (
-            int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0),
-            int(usage.get("output_tokens") or usage.get("completion_tokens") or 0),
-        )
-
-    response_meta = getattr(message, "response_metadata", None)
-    if isinstance(response_meta, dict):
-        token_usage = response_meta.get("token_usage") or response_meta.get("usage_metadata")
-        if isinstance(token_usage, dict):
-            return (
-                int(token_usage.get("prompt_tokens") or token_usage.get("input_tokens") or 0),
-                int(
-                    token_usage.get("completion_tokens")
-                    or token_usage.get("output_tokens")
-                    or 0
-                ),
-            )
-
-    return 0, 0
-
-
-def _last_user_message_text(messages: Sequence[AnyMessage]) -> str:
-    for msg in reversed(messages):
-        if isinstance(msg, HumanMessage):
-            return _extract_message_text(msg.content)
-    return _extract_message_text(messages[-1].content) if messages else ""
 
 
 def build_coordinator_graph(

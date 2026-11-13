@@ -1,5 +1,14 @@
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field
+
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError:
+    class BaseSettings(BaseModel):  # type: ignore[no-redef]
+        def __init__(self, **data):
+            super().__init__(**data)
+
+    def SettingsConfigDict(**kwargs):  # type: ignore[misc]
+        return kwargs
 
 _PLACEHOLDER_GEMINI_KEYS = {"", "create_key", "your-gemini-api-key"}
 
