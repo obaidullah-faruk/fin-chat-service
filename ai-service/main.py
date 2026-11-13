@@ -4,7 +4,15 @@ import logging
 from fastapi import Depends, FastAPI, HTTPException, status
 
 from agents.coordinator import CoordinatorResult, run_coordinator
-from db import AIRepository, RunStatus, dispose_db, init_db
+from db import (
+    AIRepository,
+    RunStatus,
+    close_checkpointer,
+    dispose_db,
+    get_checkpointer,
+    init_checkpointer,
+    init_db,
+)
 from mcp_client import (
     ToolCallTelemetry,
     get_discovered_mcp_tools,
@@ -21,11 +29,16 @@ logger = logging.getLogger("finchat.ai_service")
 async def lifespan(_app: FastAPI):
     await init_db()
     try:
+        await init_checkpointer()
+    except Exception as exc:
+        logger.warning("Checkpointer initialization warning: %s", exc)
+    try:
         discovered = await get_discovered_mcp_tools()
         logger.info("Discovered %d MCP tool(s) on startup", len(discovered))
     except Exception as exc:
         logger.warning("Deferred MCP tool discovery on startup: %s", exc)
     yield
+    await close_checkpointer()
     await dispose_db()
 
 
@@ -118,6 +131,7 @@ async def process_chat(
             session_id=payload.session_id,
             account_number=payload.account_number,
             tools=tools,
+            checkpointer=get_checkpointer(),
         )
         await _persist_run_telemetry(
             repo,
