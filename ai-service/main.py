@@ -12,6 +12,7 @@ from mcp_client import (
 )
 from schemas.chat import ChatRequest, ChatResponse
 from security.auth import verify_internal_caller
+from security.pii_redactor import redact_pii
 
 logger = logging.getLogger("finchat.ai_service")
 
@@ -94,12 +95,23 @@ async def process_chat(
     tool_telemetry: list[ToolCallTelemetry] = []
 
     try:
+        redaction = redact_pii(payload.message)
+        if redaction.has_pii:
+            await repo.log_trace(
+                run_id=run.id,
+                agent_name="pii_redactor",
+                input_state={"has_pii": True, "entity_count": len(redaction.entities)},
+                output_state={
+                    "masked_entities": [entity.entity_type for entity in redaction.entities]
+                },
+            )
+
         tools = await get_user_mcp_tools(
             user_id=payload.user_id,
             telemetry_records=tool_telemetry,
         )
         result = await run_coordinator(
-            message=payload.message,
+            message=redaction.redacted_text,
             user_id=payload.user_id,
             role=payload.role,
             session_id=payload.session_id,

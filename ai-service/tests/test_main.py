@@ -132,6 +132,63 @@ def test_process_chat_runs_coordinator_and_logs_to_ai_db(monkeypatch):
         asyncio.run(engine.dispose())
 
 
+def test_process_chat_redacts_pii_and_logs_trace(monkeypatch):
+    monkeypatch.setenv("INTERNAL_API_KEY", "test-internal-key")
+    engine, session_factory, repo = asyncio.run(_make_test_db())
+    app.dependency_overrides[get_ai_repository] = lambda: repo
+
+    captured_message = {}
+
+    async def fake_run_coordinator(*, message: str, **kwargs):
+        captured_message["message"] = message
+        return CoordinatorResult(
+            reply="Your balance is $1,000.00.",
+            intent="accounts",
+            confidence=0.99,
+            reason="Balance inquiry",
+            tools_called=["get_balance"],
+            llm_calls=[],
+            traces=[],
+        )
+
+    try:
+        with (
+            patch("main.get_user_mcp_tools", new=AsyncMock(return_value=[])),
+            patch("main.run_coordinator", new=AsyncMock(side_effect=fake_run_coordinator)),
+        ):
+            response = client.post(
+                "/chat/process",
+                json={
+                    "user_id": 4,
+                    "role": "customer",
+                    "account_number": "FC1000000001",
+                    "session_id": 10,
+                    "message": "My NID is 1234567890123 and phone 01712345678, what is my balance?",
+                },
+                headers={"X-Internal-Key": "test-internal-key"},
+            )
+
+        assert response.status_code == 200
+        # The coordinator received sanitized message, not the raw PII!
+        assert "1234567890123" not in captured_message["message"]
+        assert "01712345678" not in captured_message["message"]
+        assert "<ID_NUMBER>" in captured_message["message"]
+        assert "<PHONE_NUMBER>" in captured_message["message"]
+
+        async def verify_traces():
+            async with session_factory() as session:
+                return (await session.exec(select(AgentTrace))).all()
+
+        traces = asyncio.run(verify_traces())
+        pii_traces = [t for t in traces if t.agent_name == "pii_redactor"]
+        assert len(pii_traces) == 1
+        assert pii_traces[0].input_state.get("has_pii") is True
+        assert pii_traces[0].input_state.get("entity_count") == 2
+    finally:
+        app.dependency_overrides.clear()
+        asyncio.run(engine.dispose())
+
+
 def test_process_chat_logs_failed_run_and_returns_502_on_error(monkeypatch):
     monkeypatch.setenv("INTERNAL_API_KEY", "test-internal-key")
     engine, session_factory, repo = asyncio.run(_make_test_db())
