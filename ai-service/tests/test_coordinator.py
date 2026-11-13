@@ -327,6 +327,40 @@ def test_coordinator_with_history_passes_context_and_answers_follow_up():
     assert len(result.llm_calls) == 2  # classify_intent + transaction_agent
 
 
+def test_coordinator_greeting_intent_routes_to_greeting_reply():
+    fake_llm = FakeCoordinatorLLM(
+        intent_result=IntentClassification(
+            intent="greeting",
+            confidence=0.99,
+            reason="User said hi and asked how the assistant is doing.",
+        ),
+        agent_responses=[
+            AIMessage(
+                content="Hello! I'm doing well, thank you for asking. How can I assist you with your banking today?",
+                usage_metadata={"input_tokens": 80, "output_tokens": 20, "total_tokens": 100},
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        run_coordinator(
+            message="Hi, how are you ?",
+            user_id=4,
+            role="customer",
+            session_id=10,
+            account_number="FC1000000001",
+            tools=[],
+            llm=fake_llm,
+        )
+    )
+
+    assert result.intent == "greeting"
+    assert result.tools_called == []
+    assert "Hello!" in result.reply or "doing well" in result.reply
+    assert result.llm_calls[0].node_name == "classify_intent"
+    assert result.llm_calls[1].node_name == "greeting_reply"
+
+
 def test_create_gemini_llm_validates_key_and_configures_model():
     missing_settings = Settings(GEMINI_API_KEY="Create_key")
     with pytest.raises(RuntimeError, match="GEMINI_API_KEY is not configured"):

@@ -54,20 +54,31 @@ from security.authorization import (
     is_tool_allowed,
 )
 
-IntentLabel = Literal["accounts", "transactions", "service", "unknown"]
+IntentLabel = Literal["accounts", "transactions", "service", "greeting", "unknown"]
 
 _INTENT_SYSTEM_PROMPT = """You are the routing coordinator for FinChat, an enterprise banking assistant.
 Your only job is to classify the user's message into one of these intents based on the conversation context:
+- "greeting": friendly greetings, hellos, pleasantries, asking how the assistant is doing (e.g., "Hi", "Hello", "How are you?", "Good morning", "Thanks", "Goodbye"), without asking a specific banking query yet.
 - "accounts": personal balance inquiry, account lookups by number/name (e.g., FC1000000001), account status/details, USD endorsement info, bank-wide institutional liquidity and operational metrics/aggregates, or explanations of account concepts.
 - "transactions": personal transaction history, specific transaction lookups by reference ID (e.g., TXN-5E04875B25B1), deposits, withdrawals, transfers, account statements, transaction channels (e.g. Branch Teller, ATM, Online, POS), payment types, or follow-up explanations and clarifications regarding previously retrieved transactions or banking transaction terms.
 - "service": cheque book requests, customer 360 profile lookups by name/username, pending approval review queries (cheques, endorsements), KYC status verification, change/update of address, general customer service workflows or follow-ups.
-- "unknown": anything that does not fit the banking intents above (greetings, casual chat, coding, general trivia, poetry, non-banking questions).
+- "unknown": out-of-scope non-banking requests (e.g., writing code, general trivia, math, poetry, non-banking questions).
 
 Important Context Guidelines:
+- If the user says hello, asks how you are doing, or exchanges pleasantries without asking for a banking action yet, classify as "greeting".
 - Consider the conversation history: if the user asks a follow-up question (e.g., "What is branch teller actually is?", "Can you explain?", "What does that mean?"), classify the intent according to the banking topic discussed in the recent conversation turns.
 - If the user asks a purely out-of-scope non-banking question (such as writing code, playing games, explaining general trivia unrelated to banking), classify as "unknown".
 
 Provide an accurate intent, confidence score between 0.0 and 1.0, and a one-sentence reason."""
+
+_GREETING_SYSTEM_PROMPT = """You are FinChat, a warm, polite, and helpful enterprise AI banking assistant.
+The user has greeted you or exchanged pleasantries.
+Rules:
+1. Respond warmly, politely, and naturally (e.g., "Hello! I'm doing well, thank you for asking. How can I assist you with your banking today?").
+2. Keep your response brief and friendly (1-2 sentences).
+3. Offer assistance with FinChat banking services (such as checking balances, recent transactions, KYC status, or cheque books).
+4. Do not offer or execute non-banking services.
+"""
 
 _COORDINATOR_SYSTEM_PROMPT = """You are FinChat, a helpful, accurate banking assistant.
 Detected intent: {intent}
@@ -298,7 +309,65 @@ def build_coordinator_graph(
             return "transaction_agent"
         if intent == "service":
             return "service_agent"
+        if intent == "greeting":
+            return "greeting_reply"
         return "fallback_reply"
+
+    async def greeting_reply(state: CoordinatorState) -> dict[str, Any]:
+        started = time.perf_counter()
+        user_text = _last_user_message_text(state["messages"])
+
+        reply_text = ""
+        prompt_tokens, completion_tokens = 0, 0
+        try:
+            response = await llm.ainvoke([
+                SystemMessage(content=_GREETING_SYSTEM_PROMPT),
+                HumanMessage(content=user_text or "Hello!"),
+            ])
+            reply_text = _extract_message_text(getattr(response, "content", ""))
+            prompt_tokens, completion_tokens = _extract_token_usage(response)
+        except Exception:
+            reply_text = (
+                "Hello! I am doing well, thank you for asking. I am FinChat, your AI banking assistant. "
+                "How can I assist you with your accounts, transactions, or banking services today?"
+            )
+
+        if not reply_text:
+            reply_text = (
+                "Hello! I am doing well, thank you for asking. I am FinChat, your AI banking assistant. "
+                "How can I assist you with your accounts, transactions, or banking services today?"
+            )
+
+        latency_ms = int((time.perf_counter() - started) * 1000)
+
+        if publisher is not None and hasattr(publisher, "publish_token"):
+            words = reply_text.split(" ")
+            for i, word in enumerate(words):
+                chunk = word if i == len(words) - 1 else word + " "
+                try:
+                    await publisher.publish_token(chunk)
+                except Exception:
+                    pass
+
+        return {
+            "reply": reply_text,
+            "llm_calls": [
+                LLMCallTelemetry(
+                    node_name="greeting_reply",
+                    model_name=model_name,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    latency_ms=latency_ms,
+                )
+            ] if prompt_tokens > 0 else [],
+            "traces": [
+                TraceTelemetry(
+                    agent_name="greeting_reply",
+                    input_state={"message": user_text},
+                    output_state={"reply": reply_text},
+                )
+            ],
+        }
 
     async def fallback_reply(state: CoordinatorState) -> dict[str, Any]:
         if publisher is not None and hasattr(publisher, "publish_token"):
@@ -346,6 +415,7 @@ def build_coordinator_graph(
 
     graph = StateGraph(CoordinatorState)
     graph.add_node("classify_intent", classify_intent)
+    graph.add_node("greeting_reply", greeting_reply)
     graph.add_node("fallback_reply", fallback_reply)
 
     # Sub-agent nodes & tool nodes
@@ -369,9 +439,11 @@ def build_coordinator_graph(
             "accounts_agent": "accounts_agent",
             "transaction_agent": "transaction_agent",
             "service_agent": "service_agent",
+            "greeting_reply": "greeting_reply",
             "fallback_reply": "fallback_reply",
         },
     )
+    graph.add_edge("greeting_reply", END)
     graph.add_edge("fallback_reply", END)
 
     # Accounts sub-agent loop
