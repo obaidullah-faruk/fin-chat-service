@@ -144,15 +144,15 @@ def test_coordinator_accounts_flow_calls_tool_and_formats_reply():
     assert "10,000.00" in result.reply
     assert [c.node_name for c in result.llm_calls] == [
         "classify_intent",
-        "coordinator_agent",
-        "coordinator_agent",
+        "accounts_agent",
+        "accounts_agent",
     ]
     assert sum(c.prompt_tokens for c in result.llm_calls) == 530
     assert sum(c.completion_tokens for c in result.llm_calls) == 75
     assert [t.agent_name for t in result.traces] == [
         "classify_intent",
-        "coordinator_agent",
-        "coordinator_agent",
+        "accounts_agent",
+        "accounts_agent",
         "finalize_reply",
     ]
 

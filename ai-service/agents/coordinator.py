@@ -29,6 +29,7 @@ except ImportError:
 
 from pydantic import BaseModel, Field
 
+from agents.accounts_agent import create_accounts_agent_node
 from agents.base import (
     CoordinatorResult,
     CoordinatorState,
@@ -38,8 +39,13 @@ from agents.base import (
     extract_token_usage as _extract_token_usage,
     last_user_message_text as _last_user_message_text,
 )
+from agents.service_agent import create_service_agent_node
+from agents.transaction_agent import create_transaction_agent_node
 from config import Settings, get_settings
-from mcp_client import get_user_mcp_tools
+from mcp_client import (
+    get_all_partitioned_mcp_tools,
+    get_user_mcp_tools,
+)
 from security.authorization import (
     ROLE_PERMISSIONS,
     ToolAuthorizationError,
@@ -91,19 +97,89 @@ def create_gemini_llm(settings: Settings | None = None) -> ChatGoogleGenerativeA
     )
 
 
+def _partition_tools(
+    tools: Sequence[BaseTool] | dict[str, Sequence[BaseTool]] | None,
+) -> dict[str, list[BaseTool]]:
+    if isinstance(tools, dict):
+        return {
+            "accounts": list(tools.get("accounts", [])),
+            "transactions": list(tools.get("transactions", [])),
+            "service": list(tools.get("service", [])),
+        }
+
+    partitioned: dict[str, list[BaseTool]] = {
+        "accounts": [],
+        "transactions": [],
+        "service": [],
+    }
+    if not tools:
+        return partitioned
+
+    accounts_tools = {"get_balance", "get_account_info"}
+    transactions_tools = {"get_transactions", "get_statement"}
+    service_tools = {"request_cheque_book", "update_address", "get_kyc_status"}
+
+    for t in tools:
+        name = getattr(t, "name", "")
+        if name in accounts_tools:
+            partitioned["accounts"].append(t)
+        elif name in transactions_tools:
+            partitioned["transactions"].append(t)
+        elif name in service_tools:
+            partitioned["service"].append(t)
+        else:
+            server = getattr(t, "server_name", None)
+            if server in partitioned:
+                partitioned[server].append(t)
+            else:
+                partitioned["accounts"].append(t)
+
+    return partitioned
+
+
 def build_coordinator_graph(
     *,
     llm: BaseChatModel,
-    tools: Sequence[BaseTool],
+    tools: Sequence[BaseTool] | dict[str, Sequence[BaseTool]] | None = None,
     model_name: str = "gemini-3.8-flash",
+    checkpointer: Any = None,
 ):
-    """Build and compile the Phase 3 single-coordinator LangGraph."""
+    """Build and compile the Phase 4 multi-agent supervisor LangGraph."""
     structured_classifier = llm.with_structured_output(
         IntentClassification,
         include_raw=True,
     )
-    llm_with_tools = llm.bind_tools(tools) if tools else llm
-    tool_node = ToolNode(list(tools), handle_tool_errors=(ToolException,))
+    partitioned = _partition_tools(tools)
+
+    accounts_node = create_accounts_agent_node(
+        llm=llm,
+        tools=partitioned["accounts"],
+        model_name=model_name,
+    )
+    accounts_tool_node = ToolNode(
+        partitioned["accounts"],
+        handle_tool_errors=(ToolException,),
+    )
+
+    transaction_node = create_transaction_agent_node(
+        llm=llm,
+        tools=partitioned["transactions"],
+        model_name=model_name,
+    )
+    transaction_tool_node = ToolNode(
+        partitioned["transactions"],
+        handle_tool_errors=(ToolException,),
+    )
+
+    service_node = create_service_agent_node(
+        llm=llm,
+        tools=partitioned["service"],
+        model_name=model_name,
+    )
+    service_tool_node = ToolNode(
+        partitioned["service"],
+        handle_tool_errors=(ToolException,),
+    )
 
     async def classify_intent(state: CoordinatorState) -> dict[str, Any]:
         user_text = _last_user_message_text(state["messages"])
@@ -158,9 +234,14 @@ def build_coordinator_graph(
         }
 
     def route_by_intent(state: CoordinatorState) -> str:
-        if state.get("intent") == "unknown":
-            return "fallback"
-        return "coordinator_agent"
+        intent = state.get("intent", "unknown")
+        if intent == "accounts":
+            return "accounts_agent"
+        if intent == "transactions":
+            return "transaction_agent"
+        if intent == "service":
+            return "service_agent"
+        return "fallback_reply"
 
     async def fallback_reply(state: CoordinatorState) -> dict[str, Any]:
         return {
@@ -170,52 +251,6 @@ def build_coordinator_graph(
                     agent_name="fallback_reply",
                     input_state={"intent": state.get("intent", "unknown")},
                     output_state={"reply": _FALLBACK_REPLY},
-                )
-            ],
-        }
-
-    async def coordinator_agent(state: CoordinatorState) -> dict[str, Any]:
-        system_prompt = _COORDINATOR_SYSTEM_PROMPT.format(
-            intent=state.get("intent", "unknown"),
-            role=state.get("role", "customer"),
-            account_number=state.get("account_number") or "N/A",
-        )
-        started = time.perf_counter()
-        response = await llm_with_tools.ainvoke(
-            [SystemMessage(content=system_prompt), *state["messages"]]
-        )
-        latency_ms = int((time.perf_counter() - started) * 1000)
-
-        prompt_tokens, completion_tokens = _extract_token_usage(response)
-        requested_tools = [
-            tc["name"]
-            for tc in (getattr(response, "tool_calls", None) or [])
-            if isinstance(tc, dict) and tc.get("name")
-        ]
-
-        return {
-            "messages": [response],
-            "tools_called": requested_tools,
-            "llm_calls": [
-                LLMCallTelemetry(
-                    node_name="coordinator_agent",
-                    model_name=model_name,
-                    prompt_tokens=prompt_tokens,
-                    completion_tokens=completion_tokens,
-                    latency_ms=latency_ms,
-                )
-            ],
-            "traces": [
-                TraceTelemetry(
-                    agent_name="coordinator_agent",
-                    input_state={
-                        "intent": state.get("intent"),
-                        "message_count": len(state["messages"]),
-                    },
-                    output_state={
-                        "tools_requested": requested_tools,
-                        "has_final_text": bool(_extract_message_text(response.content)),
-                    },
                 )
             ],
         }
@@ -239,31 +274,70 @@ def build_coordinator_graph(
     graph = StateGraph(CoordinatorState)
     graph.add_node("classify_intent", classify_intent)
     graph.add_node("fallback_reply", fallback_reply)
-    graph.add_node("coordinator_agent", coordinator_agent)
-    graph.add_node("tools", tool_node)
+
+    # Sub-agent nodes & tool nodes
+    graph.add_node("accounts_agent", accounts_node)
+    graph.add_node("accounts_tools", accounts_tool_node)
+
+    graph.add_node("transaction_agent", transaction_node)
+    graph.add_node("transaction_tools", transaction_tool_node)
+
+    graph.add_node("service_agent", service_node)
+    graph.add_node("service_tools", service_tool_node)
+
     graph.add_node("finalize_reply", finalize_reply)
 
+    # Supervisor routing edges
     graph.add_edge(START, "classify_intent")
     graph.add_conditional_edges(
         "classify_intent",
         route_by_intent,
         {
-            "fallback": "fallback_reply",
-            "coordinator_agent": "coordinator_agent",
+            "accounts_agent": "accounts_agent",
+            "transaction_agent": "transaction_agent",
+            "service_agent": "service_agent",
+            "fallback_reply": "fallback_reply",
         },
     )
     graph.add_edge("fallback_reply", END)
+
+    # Accounts sub-agent loop
     graph.add_conditional_edges(
-        "coordinator_agent",
+        "accounts_agent",
         tools_condition,
         {
-            "tools": "tools",
+            "tools": "accounts_tools",
             "__end__": "finalize_reply",
         },
     )
-    graph.add_edge("tools", "coordinator_agent")
+    graph.add_edge("accounts_tools", "accounts_agent")
+
+    # Transaction sub-agent loop
+    graph.add_conditional_edges(
+        "transaction_agent",
+        tools_condition,
+        {
+            "tools": "transaction_tools",
+            "__end__": "finalize_reply",
+        },
+    )
+    graph.add_edge("transaction_tools", "transaction_agent")
+
+    # Service sub-agent loop
+    graph.add_conditional_edges(
+        "service_agent",
+        tools_condition,
+        {
+            "tools": "service_tools",
+            "__end__": "finalize_reply",
+        },
+    )
+    graph.add_edge("service_tools", "service_agent")
+
     graph.add_edge("finalize_reply", END)
 
+    if checkpointer is not None:
+        return graph.compile(checkpointer=checkpointer)
     return graph.compile()
 
 
@@ -274,17 +348,18 @@ async def run_coordinator(
     role: str,
     session_id: int,
     account_number: str | None = None,
-    tools: Sequence[BaseTool] | None = None,
+    tools: Sequence[BaseTool] | dict[str, Sequence[BaseTool]] | None = None,
     llm: BaseChatModel | None = None,
     settings: Settings | None = None,
+    checkpointer: Any = None,
 ) -> CoordinatorResult:
-    """Execute the single-coordinator graph for one chat request."""
+    """Execute the multi-agent coordinator graph for one chat request."""
     cfg = settings or get_settings()
     model = llm or create_gemini_llm(cfg)
     active_tools = (
-        list(tools)
+        tools
         if tools is not None
-        else await get_user_mcp_tools(user_id=user_id, role=role)
+        else await get_all_partitioned_mcp_tools(user_id=user_id, role=role)
     )
     model_name = (
         getattr(model, "model", None)
@@ -296,7 +371,12 @@ async def run_coordinator(
         llm=model,
         tools=active_tools,
         model_name=str(model_name),
+        checkpointer=checkpointer,
     )
+
+    invoke_config: dict[str, Any] = {"recursion_limit": 12}
+    if checkpointer is not None:
+        invoke_config["configurable"] = {"thread_id": f"session_{session_id}"}
 
     final_state = await compiled.ainvoke(
         {
@@ -313,7 +393,7 @@ async def run_coordinator(
             "llm_calls": [],
             "traces": [],
         },
-        config={"recursion_limit": 12},
+        config=invoke_config,
     )
 
     return CoordinatorResult(
