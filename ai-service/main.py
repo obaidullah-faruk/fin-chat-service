@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 from contextlib import asynccontextmanager
 import logging
 

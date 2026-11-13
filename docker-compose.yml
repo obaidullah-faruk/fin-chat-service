@@ -74,6 +74,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
       GEMINI_TEMPERATURE: ${GEMINI_TEMPERATURE:-0.0}
+      PYTHONWARNINGS: "ignore"
     ports:
       - "8001:8001"
     depends_on:
@@ -93,9 +94,12 @@ services:
   accounts-mcp:
     build: ./accounts-mcp
     command: python server.py
+    volumes:
+      - ./accounts-mcp:/app
     environment:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DJANGO_API_URL: http://backend:8000
+      PYTHONWARNINGS: "ignore"
     ports:
       - "8002:8002"
     depends_on:
@@ -104,9 +108,12 @@ services:
   transactions-mcp:
     build: ./transactions-mcp
     command: python server.py
+    volumes:
+      - ./transactions-mcp:/app
     environment:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DJANGO_API_URL: http://backend:8000
+      PYTHONWARNINGS: "ignore"
     ports:
       - "8003:8003"
     depends_on:
@@ -115,9 +122,12 @@ services:
   service-mcp:
     build: ./service-mcp
     command: python server.py
+    volumes:
+      - ./service-mcp:/app
     environment:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DJANGO_API_URL: http://backend:8000
+      PYTHONWARNINGS: "ignore"
     ports:
       - "8004:8004"
     depends_on:
