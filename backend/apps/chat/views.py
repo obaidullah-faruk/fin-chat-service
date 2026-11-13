@@ -3,8 +3,10 @@ import logging
 import httpx
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -60,6 +62,20 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             extra={'user_id': self.request.user.id, 'session_id': session.id},
         )
 
+    @action(detail=True, methods=['post'], url_path='close')
+    def close(self, request, pk=None):
+        session = self.get_object()
+        if session.status == ChatSession.Status.CLOSED:
+            return Response(ChatSessionSerializer(session).data)
+        session.status = ChatSession.Status.CLOSED
+        session.closed_at = timezone.now()
+        session.save(update_fields=['status', 'closed_at', 'updated_at'])
+        logger.info(
+            'Chat session closed',
+            extra={'user_id': request.user.id, 'session_id': session.id},
+        )
+        return Response(ChatSessionSerializer(session).data)
+
 
 class ChatMessageListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -80,6 +96,11 @@ class ChatMessageListCreateView(APIView):
     @transaction.atomic
     def post(self, request, session_id: int):
         session = self._get_session(request.user, session_id)
+        if session.status == ChatSession.Status.CLOSED:
+            return Response(
+                {'detail': 'This chat session is closed. No new messages can be added.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = ChatMessageCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         content = serializer.validated_data['content'].strip()
@@ -126,12 +147,17 @@ class AgentChatView(APIView):
 
     def _call_ai_service(self, user, session: ChatSession, message: str) -> dict:
         account = getattr(user, 'bank_account', None)
+        recent_msgs = list(session.messages.order_by('-created_at', '-id')[:10])
+        recent_msgs.reverse()
+        history = [{'role': m.role, 'content': m.content} for m in recent_msgs]
+
         payload = {
             'user_id': user.id,
             'role': user.role.name,
             'account_number': account.account_number if account else None,
             'session_id': session.id,
             'message': message,
+            'history': history,
         }
         headers = {'X-Internal-Key': settings.INTERNAL_API_KEY}
         url = f"{settings.AI_SERVICE_URL.rstrip('/')}/chat/process"
@@ -155,6 +181,11 @@ class AgentChatView(APIView):
     @transaction.atomic
     def post(self, request, session_id: int):
         session = self._get_session(request.user, session_id)
+        if session.status == ChatSession.Status.CLOSED:
+            return Response(
+                {'detail': 'This chat session is closed. No new messages can be added.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = ChatMessageCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         content = serializer.validated_data['content'].strip()

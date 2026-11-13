@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Add as AddIcon,
   Chat as ChatIcon,
+  CheckCircleOutlined as CloseSessionIcon,
   CloseFullscreen as RestoreIcon,
   DeleteOutlined as DeleteIcon,
+  LockOutlined as LockedIcon,
   OpenInFull as MaximizeIcon,
   Remove as MinimizeIcon,
   SmartToy as BotIcon,
@@ -12,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import {
   Box,
+  Chip,
   Dialog,
   Divider,
   Fab,
@@ -205,6 +208,14 @@ export function ChatWidget() {
     },
   });
 
+  const closeSessionMutation = useMutation({
+    mutationFn: (id: number) => chatApi.closeSession(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', activeSessionId] });
+    },
+  });
+
   /**
    * HTTP fallback mutation (used when WebSocket is not connected).
    */
@@ -237,13 +248,15 @@ export function ChatWidget() {
 
   if (!accessToken || !user) return null;
 
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const isSessionClosed = activeSession?.status === 'closed';
   const isSending = sendMessageMutation.isPending || Boolean(optimisticUserMsg);
 
   // ── Send handler ──────────────────────────────────────────────────────────
 
   const handleSend = async () => {
     const trimmed = input.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed || isSending || isSessionClosed) return;
     setInput('');
 
     // Ensure we have an active session before sending
@@ -314,6 +327,10 @@ export function ChatWidget() {
         <ChatHeader
           wsConnected={wsConnected}
           isMaximized
+          isClosed={isSessionClosed}
+          canClose={Boolean(activeSessionId && !isSessionClosed)}
+          onCloseSession={() => activeSessionId && closeSessionMutation.mutate(activeSessionId)}
+          isClosingSession={closeSessionMutation.isPending}
           onRestore={openExpanded}
           onCollapse={collapse}
         />
@@ -325,6 +342,7 @@ export function ChatWidget() {
             activeSessionId={activeSessionId}
             onSelectSession={setActiveSessionId}
             onDeleteSession={(id) => deleteSessionMutation.mutate(id)}
+            onCloseSession={(id) => closeSessionMutation.mutate(id)}
             onNewSession={() => createSessionMutation.mutate()}
             isCreating={createSessionMutation.isPending}
           />
@@ -337,11 +355,27 @@ export function ChatWidget() {
               status={status}
               bottomRef={messagesEndRef}
             />
+            {isSessionClosed && (
+              <Box
+                sx={{
+                  px: 2,
+                  py: 0.75,
+                  bgcolor: '#fef2f2',
+                  borderTop: '1px solid #fee2e2',
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="caption" sx={{ color: '#991b1b', fontWeight: 600 }}>
+                  This conversation is closed. Start a new chat to continue.
+                </Typography>
+              </Box>
+            )}
             <ChatInputBar
               value={input}
               onChange={setInput}
               onSend={handleSend}
               disabled={isSending}
+              isClosed={isSessionClosed}
             />
           </Box>
         </Box>
@@ -371,6 +405,10 @@ export function ChatWidget() {
       <ChatHeader
         wsConnected={wsConnected}
         isMaximized={false}
+        isClosed={isSessionClosed}
+        canClose={Boolean(activeSessionId && !isSessionClosed)}
+        onCloseSession={() => activeSessionId && closeSessionMutation.mutate(activeSessionId)}
+        isClosingSession={closeSessionMutation.isPending}
         onNewChat={() => createSessionMutation.mutate()}
         isCreatingChat={createSessionMutation.isPending}
         onMaximize={openMaximized}
@@ -391,7 +429,7 @@ export function ChatWidget() {
           >
             {sessions.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.title || `Chat Session #${s.id}`}
+                {s.title || `Chat Session #${s.id}`} {s.status === 'closed' ? '• Closed' : ''}
               </MenuItem>
             ))}
           </Select>
@@ -406,11 +444,27 @@ export function ChatWidget() {
         status={status}
         bottomRef={messagesEndRef}
       />
+      {isSessionClosed && (
+        <Box
+          sx={{
+            px: 2,
+            py: 0.75,
+            bgcolor: '#fef2f2',
+            borderTop: '1px solid #fee2e2',
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#991b1b', fontWeight: 600 }}>
+            This conversation is closed. Start a new chat to continue.
+          </Typography>
+        </Box>
+      )}
       <ChatInputBar
         value={input}
         onChange={setInput}
         onSend={handleSend}
         disabled={isSending}
+        isClosed={isSessionClosed}
       />
     </Paper>
   );
@@ -423,6 +477,10 @@ export function ChatWidget() {
 interface ChatHeaderProps {
   wsConnected: boolean;
   isMaximized: boolean;
+  isClosed?: boolean;
+  canClose?: boolean;
+  onCloseSession?: () => void;
+  isClosingSession?: boolean;
   onRestore?: () => void;
   onCollapse: () => void;
   onNewChat?: () => void;
@@ -433,6 +491,10 @@ interface ChatHeaderProps {
 function ChatHeader({
   wsConnected,
   isMaximized,
+  isClosed,
+  canClose,
+  onCloseSession,
+  isClosingSession,
   onRestore,
   onCollapse,
   onNewChat,
@@ -458,6 +520,20 @@ function ChatHeader({
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           FinChat Assistant
         </Typography>
+        {isClosed && (
+          <Chip
+            icon={<LockedIcon sx={{ fontSize: '13px !important', color: 'inherit' }} />}
+            label="Closed"
+            size="small"
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.22)',
+              color: 'white',
+              height: 20,
+              fontSize: '0.7rem',
+              fontWeight: 600,
+            }}
+          />
+        )}
         <Tooltip title={wsTooltip}>
           {wsConnected ? (
             <WifiIcon sx={{ fontSize: 16, color: '#86efac' }} />
@@ -467,7 +543,25 @@ function ChatHeader({
         </Tooltip>
       </Stack>
 
-      <Stack direction="row" spacing={0.5}>
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+        {canClose && (
+          <Tooltip title="Close conversation (complete)">
+            <span>
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={onCloseSession}
+                disabled={isClosingSession}
+              >
+                {isClosingSession ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <CloseSessionIcon fontSize="small" />
+                )}
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
         {isMaximized ? (
           <>
             <Tooltip title="Restore floating panel">
@@ -522,6 +616,7 @@ interface ChatSessionSidebarProps {
   activeSessionId: number | null;
   onSelectSession: (id: number) => void;
   onDeleteSession: (id: number) => void;
+  onCloseSession: (id: number) => void;
   onNewSession: () => void;
   isCreating: boolean;
 }
@@ -532,6 +627,7 @@ function ChatSessionSidebar({
   activeSessionId,
   onSelectSession,
   onDeleteSession,
+  onCloseSession,
   onNewSession,
   isCreating,
 }: ChatSessionSidebarProps) {
@@ -578,12 +674,42 @@ function ChatSessionSidebar({
             key={s.id}
             selected={s.id === activeSessionId}
             onClick={() => onSelectSession(s.id)}
+            sx={{
+              opacity: s.status === 'closed' ? 0.75 : 1,
+            }}
           >
             <ListItemText
-              primary={s.title || `Chat #${s.id}`}
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="body2" noWrap sx={{ fontWeight: 500, flex: 1 }}>
+                    {s.title || `Chat #${s.id}`}
+                  </Typography>
+                  {s.status === 'closed' && (
+                    <Chip
+                      label="Closed"
+                      size="small"
+                      sx={{ height: 18, fontSize: '0.625rem', bgcolor: '#f1f5f9' }}
+                    />
+                  )}
+                </Box>
+              }
               secondary={`${s.message_count} messages`}
-              slotProps={{ primary: { noWrap: true, variant: 'body2', sx: { fontWeight: 500 } } }}
             />
+            {s.status === 'active' && s.id === activeSessionId && (
+              <Tooltip title="Close conversation">
+                <IconButton
+                  size="small"
+                  edge="end"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseSession(s.id);
+                  }}
+                  sx={{ mr: 0.5 }}
+                >
+                  <CloseSessionIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             <IconButton
               size="small"
               edge="end"
@@ -592,7 +718,7 @@ function ChatSessionSidebar({
                 onDeleteSession(s.id);
               }}
             >
-              <DeleteOutlined fontSize="small" />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </ListItemButton>
         ))}
@@ -600,6 +726,3 @@ function ChatSessionSidebar({
     </Box>
   );
 }
-
-// Local icon import needed inside component scope
-import { DeleteOutlined } from '@mui/icons-material';

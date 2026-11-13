@@ -205,6 +205,7 @@ async def process_chat(
                     role=payload.role,
                     session_id=payload.session_id,
                     account_number=payload.account_number,
+                    history=payload.history,
                     tools=tools,
                     checkpointer=get_checkpointer(),
                     publisher=publisher,

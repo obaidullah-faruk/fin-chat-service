@@ -75,6 +75,38 @@ class ChatTests(APITestCase):
         self.assertEqual(call_args.kwargs['json']['account_number'], 'FC1000000001')
         self.assertEqual(call_args.kwargs['json']['session_id'], session_id)
         self.assertEqual(call_args.kwargs['json']['message'], 'Hello agent')
+        self.assertEqual(call_args.kwargs['json']['history'], [])
+
+    @override_settings(
+        INTERNAL_API_KEY='test-internal-key',
+        AI_SERVICE_URL='http://ai-service:8001',
+    )
+    @patch('apps.chat.views.httpx.Client')
+    def test_close_session_and_reject_further_messages(self, mock_client_cls):
+        self._authenticate('customer1')
+        session_resp = self.client.post(self.sessions_url, {'title': 'To be closed'})
+        session_id = session_resp.data['id']
+        self.assertEqual(session_resp.data['status'], 'active')
+        self.assertIsNone(session_resp.data['closed_at'])
+
+        # Close session
+        close_url = reverse('chat-session-close', args=[session_id])
+        close_resp = self.client.post(close_url)
+        self.assertEqual(close_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(close_resp.data['status'], 'closed')
+        self.assertIsNotNone(close_resp.data['closed_at'])
+
+        # Attempting to post to agent should return 400
+        agent_url = reverse('chat-session-agent', args=[session_id])
+        agent_resp = self.client.post(agent_url, {'content': 'Should be rejected'})
+        self.assertEqual(agent_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('closed', agent_resp.data['detail'].lower())
+
+        # Attempting to post to standard message list should return 400
+        msg_url = reverse('chat-session-messages', args=[session_id])
+        msg_resp = self.client.post(msg_url, {'content': 'Also rejected'})
+        self.assertEqual(msg_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('closed', msg_resp.data['detail'].lower())
 
     @override_settings(
         INTERNAL_API_KEY='test-internal-key',

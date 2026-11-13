@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal, TypedDict
 
 try:
     from langchain_core.language_models.chat_models import BaseChatModel
-    from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
+    from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
     from langchain_core.tools import BaseTool, ToolException
     from langchain_google_genai import ChatGoogleGenerativeAI
     from langgraph.graph import END, START, StateGraph
@@ -14,6 +14,7 @@ try:
     from langgraph.prebuilt import ToolNode, tools_condition
 except ImportError:
     BaseChatModel = Any  # type: ignore[assignment,misc]
+    AIMessage = Any  # type: ignore[assignment,misc]
     AnyMessage = Any  # type: ignore[assignment,misc]
     HumanMessage = Any  # type: ignore[assignment,misc]
     SystemMessage = Any  # type: ignore[assignment,misc]
@@ -56,11 +57,15 @@ from security.authorization import (
 IntentLabel = Literal["accounts", "transactions", "service", "unknown"]
 
 _INTENT_SYSTEM_PROMPT = """You are the routing coordinator for FinChat, an enterprise banking assistant.
-Your only job is to classify the user's message into one of these intents:
-- "accounts": personal balance inquiry, account lookups by number/name (e.g., FC1000000001), account status/details, USD endorsement info, or bank-wide institutional liquidity and operational metrics/aggregates
-- "transactions": personal transaction history, specific transaction lookups by reference ID (e.g., TXN-5E04875B25B1), deposits, withdrawals, transfers, account statements
-- "service": cheque book requests, customer 360 profile lookups by name/username, pending approval review queries (cheques, endorsements), KYC status verification, change/update of address, general banking service requests
-- "unknown": anything that does not fit the banking intents above (greetings, casual chat, coding, general trivia)
+Your only job is to classify the user's message into one of these intents based on the conversation context:
+- "accounts": personal balance inquiry, account lookups by number/name (e.g., FC1000000001), account status/details, USD endorsement info, bank-wide institutional liquidity and operational metrics/aggregates, or explanations of account concepts.
+- "transactions": personal transaction history, specific transaction lookups by reference ID (e.g., TXN-5E04875B25B1), deposits, withdrawals, transfers, account statements, transaction channels (e.g. Branch Teller, ATM, Online, POS), payment types, or follow-up explanations and clarifications regarding previously retrieved transactions or banking transaction terms.
+- "service": cheque book requests, customer 360 profile lookups by name/username, pending approval review queries (cheques, endorsements), KYC status verification, change/update of address, general customer service workflows or follow-ups.
+- "unknown": anything that does not fit the banking intents above (greetings, casual chat, coding, general trivia, poetry, non-banking questions).
+
+Important Context Guidelines:
+- Consider the conversation history: if the user asks a follow-up question (e.g., "What is branch teller actually is?", "Can you explain?", "What does that mean?"), classify the intent according to the banking topic discussed in the recent conversation turns.
+- If the user asks a purely out-of-scope non-banking question (such as writing code, playing games, explaining general trivia unrelated to banking), classify as "unknown".
 
 Provide an accurate intent, confidence score between 0.0 and 1.0, and a one-sentence reason."""
 
@@ -213,12 +218,24 @@ def build_coordinator_graph(
             except Exception:
                 pass
 
-        result = await structured_classifier.ainvoke(
-            [
-                SystemMessage(content=_INTENT_SYSTEM_PROMPT),
-                HumanMessage(content=user_text),
-            ]
-        )
+        dialogue_messages: list[AnyMessage] = []
+        for m in state["messages"]:
+            msg_type = getattr(m, "type", "")
+            if msg_type in ("human", "ai") or isinstance(m, (HumanMessage, AIMessage)):
+                text = _extract_message_text(getattr(m, "content", ""))
+                if text:
+                    if msg_type == "human" or isinstance(m, HumanMessage):
+                        dialogue_messages.append(HumanMessage(content=text))
+                    else:
+                        dialogue_messages.append(AIMessage(content=text))
+
+        recent_dialogue = dialogue_messages[-6:] if len(dialogue_messages) > 6 else dialogue_messages
+        messages_for_classification = [
+            SystemMessage(content=_INTENT_SYSTEM_PROMPT),
+            *recent_dialogue,
+        ]
+
+        result = await structured_classifier.ainvoke(messages_for_classification)
         latency_ms = int((time.perf_counter() - started) * 1000)
 
         raw_msg: Any = None
@@ -404,6 +421,7 @@ async def run_coordinator(
     role: str,
     session_id: int,
     account_number: str | None = None,
+    history: Sequence[Any] | None = None,
     tools: Sequence[BaseTool] | dict[str, Sequence[BaseTool]] | None = None,
     llm: BaseChatModel | None = None,
     settings: Settings | None = None,
@@ -440,9 +458,22 @@ async def run_coordinator(
     if checkpointer is not None:
         invoke_config["configurable"] = {"thread_id": f"session_{session_id}"}
 
+    initial_messages: list[AnyMessage] = []
+    if history:
+        for item in history:
+            role_name = getattr(item, "role", None) or (item.get("role") if isinstance(item, dict) else None)
+            content = getattr(item, "content", None) or (item.get("content") if isinstance(item, dict) else "")
+            if not content:
+                continue
+            if role_name == "user":
+                initial_messages.append(HumanMessage(content=content))
+            elif role_name == "assistant":
+                initial_messages.append(AIMessage(content=content))
+    initial_messages.append(HumanMessage(content=message))
+
     final_state = await compiled.ainvoke(
         {
-            "messages": [HumanMessage(content=message)],
+            "messages": initial_messages,
             "user_id": user_id,
             "role": role,
             "account_number": account_number,

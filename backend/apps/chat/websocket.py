@@ -80,15 +80,23 @@ def _save_assistant_message(
     )
 
 
+def _get_session_history(session: ChatSession, limit: int = 10) -> list[dict[str, str]]:
+    recent = list(session.messages.order_by("-created_at", "-id")[:limit])
+    recent.reverse()
+    return [{"role": m.role, "content": m.content} for m in recent]
+
+
 async def _trigger_ai_service(user: Any, session: ChatSession, message: str) -> None:
     """Call AI service asynchronously on behalf of the WebSocket client."""
     account = getattr(user, "bank_account", None)
+    history = await sync_to_async(_get_session_history)(session)
     payload = {
         "user_id": user.id,
         "role": user.role.name,
         "account_number": account.account_number if account else None,
         "session_id": session.id,
         "message": message,
+        "history": history,
     }
     headers = {"X-Internal-Key": getattr(settings, "INTERNAL_API_KEY", "")}
     ai_service_url = getattr(settings, "AI_SERVICE_URL", "http://ai-service:8001").rstrip("/")
@@ -255,6 +263,18 @@ async def chat_websocket_application(scope: dict[str, Any], receive: Any, send: 
 
                 content = payload.get("content", "").strip()
                 if not content:
+                    continue
+
+                # Check if session is closed
+                session_status = await sync_to_async(lambda: session.status)()
+                if session_status == ChatSession.Status.CLOSED:
+                    await send({
+                        "type": "websocket.send",
+                        "text": json.dumps({
+                            "type": "error",
+                            "error": "This chat session is closed. No new messages can be added.",
+                        }),
+                    })
                     continue
 
                 # Persist user message and trigger AI service

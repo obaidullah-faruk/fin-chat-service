@@ -38,6 +38,13 @@ export const chatApi = {
     await apiClient.delete(`/chat/sessions/${sessionId}/`);
   },
 
+  closeSession: async (sessionId: number): Promise<ChatSession> => {
+    const { data } = await apiClient.post<ChatSession>(
+      `/chat/sessions/${sessionId}/close/`
+    );
+    return data;
+  },
+
   getMessages: async (sessionId: number): Promise<ChatMessage[]> => {
     const { data } = await apiClient.get<ChatMessage[]>(
       `/chat/sessions/${sessionId}/messages/`

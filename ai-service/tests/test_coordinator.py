@@ -286,6 +286,47 @@ def test_coordinator_propagates_unexpected_transport_errors():
         )
 
 
+def test_coordinator_with_history_passes_context_and_answers_follow_up():
+    fake_llm = FakeCoordinatorLLM(
+        intent_result=IntentClassification(
+            intent="transactions",
+            confidence=0.96,
+            reason="User is asking for an explanation of Branch Teller mentioned in the previous transaction details.",
+        ),
+        agent_responses=[
+            AIMessage(
+                content="A Branch Teller is a bank employee at a physical branch counter who processes cash deposits and withdrawals.",
+                usage_metadata={"input_tokens": 150, "output_tokens": 25, "total_tokens": 175},
+            ),
+        ],
+    )
+
+    history = [
+        {"role": "user", "content": "Tell me about TXN-5E04875B25B1"},
+        {
+            "role": "assistant",
+            "content": "Transaction TXN-5E04875B25B1: Deposit of $345.00 via Channel: Branch Teller.",
+        },
+    ]
+
+    result = asyncio.run(
+        run_coordinator(
+            message="What is branch teller actually is?",
+            user_id=1,
+            role="superadmin",
+            session_id=12,
+            history=history,
+            tools=[],
+            llm=fake_llm,
+        )
+    )
+
+    assert result.intent == "transactions"
+    assert "Branch Teller" in result.reply
+    assert result.tools_called == []
+    assert len(result.llm_calls) == 2  # classify_intent + transaction_agent
+
+
 def test_create_gemini_llm_validates_key_and_configures_model():
     missing_settings = Settings(GEMINI_API_KEY="Create_key")
     with pytest.raises(RuntimeError, match="GEMINI_API_KEY is not configured"):

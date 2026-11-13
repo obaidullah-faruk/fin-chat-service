@@ -219,6 +219,8 @@ export interface Endorsement {
 export interface ChatSession {
   id: number;
   title: string;
+  status: 'active' | 'closed';
+  closed_at: string | null;
   message_count: number;
   last_message: string | null;
   created_at: string;
