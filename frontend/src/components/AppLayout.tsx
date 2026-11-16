@@ -5,6 +5,7 @@ import {
   AdminPanelSettings as AdminIcon,
   ArrowDownward as DepositIcon,
   ArrowUpward as WithdrawIcon,
+  AutoStories as KnowledgeIcon,
   Badge as BackOfficeIcon,
   CheckCircleOutlined as ApprovalIcon,
   CurrencyExchange as EndorsementIcon,
@@ -111,6 +112,12 @@ const STAFF_NAV_SECTIONS: NavSection[] = [
   {
     title: 'Administration',
     items: [
+      {
+        label: 'Knowledge Base',
+        path: '/admin/knowledge-base',
+        icon: <KnowledgeIcon fontSize="small" />,
+        roles: ['admin', 'superadmin'],
+      },
       {
         label: 'User Management',
         path: '/admin/users',

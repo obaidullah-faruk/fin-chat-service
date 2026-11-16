@@ -1,0 +1,71 @@
+# Meridian Trust & Savings Bank - 5.35% APY Promotional 9-Month Special Certificate of Deposit
+
+MERIDIAN TRUST & SAVINGS BANK
+DEPOSIT PRODUCT PROMOTIONAL RATE BULLETIN & DISCLOSURE SCHEDULE
+
+CAMPAIGN TITLE: 5.35% APY Promotional 9-Month Special Certificate of Deposit (CD)
+CAMPAIGN CODE: MTSB-MKT-2026-Q1-CD535
+RATE SPECIFICATION: 5.35% Annual Percentage Yield (APY) / 5.22% Fixed Interest Rate
+TERM DURATION: 9 Months (270 Calendar Days)
+EFFECTIVE DATES: January 15, 2026 through April 30, 2026
+DEPOSIT REQUIREMENT: $10,000 Minimum Opening Deposit in New Money
+
+================================================================================
+1. EXECUTIVE SUMMARY & PROMOTIONAL HIGHLIGHTS
+================================================================================
+Headline: "Lock In Guaranteed Peak Yield - 5.35% APY on Our Exclusive 9-Month Special CD."
+
+Meridian Trust & Savings Bank is offering an industry-leading guaranteed fixed return for savers seeking maximum short-term yield with complete capital safety. For a limited time, earn an exceptional 5.35% Annual Percentage Yield (APY) for a 9-month term when opening a Promotional Special CD with new money deposits of $10,000 or greater.
+
+Product Highlights:
+- High-Yield Guaranteed Fixed Return: 5.35% APY guaranteed for the full 9-month term, shielding your savings against market volatility or future central bank rate cuts.
+- Low Barrier to High Yield: Minimum opening balance requirement of only $10,000.
+- Compounding Frequency: Interest is compounded daily and credited monthly or at maturity, maximizing total effective yield.
+- Flexible Interest Payout Options: Choose to reinvest earned interest into the CD principal, or have monthly interest disbursements transferred directly into your Meridian checking or savings account with no fee.
+- FDIC Insured: Backed by the full faith and credit of the United States Government through the Federal Deposit Insurance Corporation (FDIC) up to $250,000 per depositor.
+
+================================================================================
+2. MANDATORY QUALIFYING CRITERIA & NEW MONEY RULE
+================================================================================
+To receive the advertised promotional APY of 5.35%, the deposit must strictly satisfy the following standards:
+
+A. "New Money" Definition
+- The entire opening deposit balance must consist solely of "New Money."
+- New Money is defined as funds not currently held in any existing deposit account, certificate of deposit, investment custody account, or wealth management portfolio at Meridian Trust & Savings Bank, nor funds withdrawn, transferred, or disbursed from any MTSB account within the ninety (90) calendar days prior to the CD opening date.
+- Eligible funding methods for New Money include: external ACH transfer from an unaffiliated financial institution, incoming domestic wire transfer, personal or cashier's check drawn on an external bank, or direct physical cash deposit at a branch.
+- Internal transfers, rollovers from maturing standard MTSB CDs, or transfers between existing MTSB checking, savings, or money market accounts do NOT qualify for this promotional rate.
+
+B. Minimum & Maximum Deposit Limits
+- Minimum Opening Deposit: $10,000.00. Deposits under $10,000 are ineligible for the promotional APY and will default to the standard 9-month CD tier (currently 2.15% APY).
+- Maximum Promotional CD Balance: $1,000,000.00 per household. Deposits exceeding $1,000,000 require advance authorization from the Meridian Wealth & Institutional Treasury Division.
+
+================================================================================
+3. MATURITY, GRACE PERIOD & AUTOMATIC RENEWAL TERMS
+================================================================================
+- Maturity Notice: MTSB will issue a written maturity notification and electronic account alert thirty (30) calendar days prior to the scheduled maturity date outlining available rollover, withdrawal, and reinvestment options.
+- 10-Day Grace Period: Account holders have a grace period of ten (10) calendar days starting on the calendar day after maturity. During this 10-day grace period, the depositor may:
+  1. Withdraw principal and accumulated interest without incurring any penalty;
+  2. Add additional funds to the renewed certificate; or
+  3. Transfer the funds to another active Meridian deposit product or open a newly available promotional CD term.
+- Default Automatic Renewal: If no specific instructions or fund withdrawals are executed before the expiration of the 10-calendar-day grace period, the Promotional 9-Month Special CD will AUTOMATICALLY RENEW into a standard, non-promotional Meridian 6-Month Certificate of Deposit at the prevailing standard APY in effect on the date of maturity.
+- Note on Non-Renewal of Promotional Tier: Promotional terms, promotional interest rates, and promotional APYs are one-time offers and do NOT carry over to subsequent renewal cycles. The renewed CD will be subject to all rules and penalties governing standard 6-month certificates.
+
+================================================================================
+4. EARLY WITHDRAWAL PENALTIES & CONDITIONS
+================================================================================
+A certificate of deposit is a time deposit agreement. Funds committed to this CD are expected to remain on deposit until the scheduled maturity date.
+- Early Withdrawal Penalty: If any portion of the principal balance is withdrawn prior to the completion of the 9-month term, an early withdrawal penalty will be assessed.
+- Penalty Formula: The penalty assessed shall equal ninety (90) calendar days of simple interest on the amount withdrawn, calculated at the contract interest rate (5.22%), regardless of whether that interest has been earned or previously disbursed.
+- Principal Reduction: If earned interest is insufficient to cover the calculated penalty, the remaining penalty balance will be deducted directly from the principal deposit amount.
+- Exceptions: Penalties are waived solely in the event of the death or formal judicial determination of mental incompetence of the primary account owner, or in the case of mandatory minimum distributions (RMD) from qualified IRA CD accounts.
+
+================================================================================
+5. LEGAL DISCLOSURES & TRUTH IN SAVINGS ACT INFORMATION
+================================================================================
+- APY Calculation: Annual Percentage Yield (APY) of 5.35% assumes interest remains on deposit until maturity. A withdrawal of interest prior to maturity will reduce earnings.
+- Rate Lock Guarantee: Rates are effective as of January 15, 2026, and may be changed, suspended, or discontinued at any time without notice prior to funding. Once the CD is opened and funded, the 5.35% APY is locked and guaranteed for the full 270-day duration.
+- Tax Treatment: Interest earnings are subject to federal and applicable state income taxation and will be reported annually on IRS Form 1099-INT.
+- Governing Law: Subject to the Meridian Trust & Savings Bank Consumer Deposit Account Agreement and Terms & Conditions.
+
+Meridian Trust & Savings Bank | Member FDIC | Equal Housing Lender
+400 Meridian Plaza, Financial District, New York, NY 10005 | Phone: 1-800-555-MTSB

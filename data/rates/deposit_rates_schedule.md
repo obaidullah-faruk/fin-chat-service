@@ -1,0 +1,102 @@
+# Meridian Trust & Savings Bank - Consumer & Commercial Deposit Rates Schedule
+
+MERIDIAN TRUST & SAVINGS BANK
+CONSUMER & COMMERCIAL DEPOSIT RATES SCHEDULE
+Effective Date: November 1, 2026 | Last Updated: November 15, 2026
+Headquarters: 100 Meridian Plaza, Charlotte, NC 28202 | Member FDIC | Equal Housing Lender
+
+================================================================================
+1. OVERVIEW & REGULATORY DISCLOSURES
+================================================================================
+This Rate Schedule details the interest rates, Annual Percentage Yields (APY), minimum opening deposit requirements, balance computation methods, and account features for deposit accounts offered by Meridian Trust & Savings Bank (MTSB).
+
+All interest-bearing deposit accounts are insured by the Federal Deposit Insurance Corporation (FDIC) up to the statutory maximum of $250,000 per depositor, per ownership category. For deposits exceeding $250,000, MTSB provides excess deposit insurance coverage up to $50,000,000 through the IntraFi Network Deposits (formerly CDARS and ICS) program at no additional fee to eligible clients.
+
+Interest Rate Definitions:
+- Interest Rate: The annual percentage rate paid on an account, without reflecting the effect of compounding.
+- Annual Percentage Yield (APY): A standardized percentage rate reflecting the total amount of interest paid on an account based on the interest rate and the frequency of daily compounding over a 365-day year (366 days in a leap year).
+- Balance Computation Method: Daily Balance Method. Interest is calculated by applying a daily periodic rate to the principal balance in the account each day.
+- Compounding & Crediting: Interest compounds DAILY and is credited to the account on the final business day of each monthly statement cycle.
+
+================================================================================
+2. APEX HIGH-YIELD SAVINGS ACCOUNT
+================================================================================
+The Apex Savings Account is designed for liquid consumer reserves seeking competitive yields with full tier-based compounding.
+
+Tier Structure & Yields:
+--------------------------------------------------------------------------------
+Tier    Account Balance Range           Interest Rate    Annual Percentage Yield (APY)
+--------------------------------------------------------------------------------
+Tier 1  $0.00 to $9,999.99              3.50%            3.56% APY
+Tier 2  $10,000.00 to $49,999.99        4.15%            4.24% APY
+Tier 3  $50,000.00 to $249,999.99       4.60%            4.71% APY
+Tier 4  $250,000.00 and above           4.85%            4.97% APY
+--------------------------------------------------------------------------------
+
+Account Terms & Conditions:
+- Minimum Opening Deposit: $100.00.
+- Monthly Maintenance Fee: $5.00 monthly fee waived when a minimum daily ledger balance of $500.00 or an average monthly balance of $1,000.00 is maintained.
+- Interest Accrual: Interest begins to accrue on the business day non-cash items (such as personal checks) are deposited.
+- Rate Guarantee: Variable rate account; interest rates and APYs are subject to change at bank discretion at any time after account opening.
+- Transfer Limitations: Federal Regulation D limitations on savings transfers have been modernized; clients receive unlimited online transfers between linked MTSB accounts.
+
+================================================================================
+3. MERIDIAN PREMIER HIGH-YIELD MONEY MARKET ACCOUNT (MMA)
+================================================================================
+The Premier High-Yield Money Market Account combines premium short-term yield tiers with convenient check-writing and debit card liquidity.
+
+Tier Structure & Yields:
+--------------------------------------------------------------------------------
+Tier    Account Balance Range           Interest Rate    Annual Percentage Yield (APY)
+--------------------------------------------------------------------------------
+Tier 1  $0.00 to $24,999.99             3.25%            3.30% APY
+Tier 2  $25,000.00 to $99,999.99        4.35%            4.45% APY
+Tier 3  $100,000.00 to $499,999.99      4.75%            4.86% APY
+Tier 4  $500,000.00 and above           5.05%            5.18% APY
+--------------------------------------------------------------------------------
+
+Account Terms & Conditions:
+- Minimum Opening Deposit: $2,500.00.
+- Monthly Service Charge: $15.00 monthly service charge waived with a minimum daily ledger balance of $5,000.00.
+- Check-Writing & Debit Privileges: Includes up to 6 pre-authorized checks, draft withdrawals, or point-of-sale debit card transactions per monthly statement cycle without fee. Excess debit transactions incur an administrative fee of $15.00 per item.
+- Tier Blending: Interest is calculated on a tiered-balance structure, where the stated rate applies to the entire daily balance once that tier threshold is attained.
+
+================================================================================
+4. PREMIER INTEREST CHECKING ACCOUNT
+================================================================================
+Full-featured transactional checking account earning tiered interest with relationship banking privileges.
+
+Tier Structure & Yields:
+--------------------------------------------------------------------------------
+Tier    Account Balance Range           Interest Rate    Annual Percentage Yield (APY)
+--------------------------------------------------------------------------------
+Tier 1  $0.00 to $1,499.99              0.05%            0.05% APY
+Tier 2  $1,500.00 to $9,999.99          0.75%            0.75% APY
+Tier 3  $10,000.00 to $49,999.99        1.50%            1.51% APY
+Tier 4  $50,000.00 and above            2.25%            2.28% APY
+--------------------------------------------------------------------------------
+
+Account Terms & Conditions:
+- Minimum Opening Deposit: $50.00.
+- Monthly Service Fee: $12.00, automatically waived if client meets ANY of the following criteria:
+  a) Maintain a daily minimum balance of $1,500.00; OR
+  b) Receive qualified recurring electronic direct deposits totaling $2,500.00 or more per cycle; OR
+  c) Maintain combined qualifying relationship deposits and consumer loan balances of $25,000.00 across MTSB accounts.
+- Relationship Benefits: Unlimited nationwide out-of-network ATM surcharge fee refunds up to $25.00 per monthly statement cycle; complimentary personalized standard check orders; complimentary cashier's checks (up to 3 per month).
+
+================================================================================
+5. BUSINESS & COMMERCIAL DEPOSIT SWEEP SOLUTIONS
+================================================================================
+For corporate and commercial treasury management clients:
+- Commercial Analyzed Checking: Earnings Credit Rate (ECR) of 3.85% applied against eligible ledger balances to offset treasury management and wire transfer transaction fees.
+- Commercial Automated Sweep Account: Overnight excess liquid funds automatically swept into collateralized repurchase agreements or institutional money market mutual funds yielding an annualized effective yield of 4.90% net of administrative sweep fees.
+
+================================================================================
+6. SUMMARY OF GENERAL ACCOUNT CHARGES & POLICIES
+================================================================================
+- Overdraft / Insufficient Funds Fee: $0.00 (MTSB eliminated consumer non-sufficient funds and overdraft fees on January 1, 2025).
+- Dormant Account Inactivity Fee: $5.00/month after 24 consecutive months without customer-initiated activity on balances below $250.00.
+- Paper Statement Fee: $3.00/month (e-Statements provided free of charge via Meridian Online and Mobile Banking).
+- Wire Transfer (Domestic Inbound): $0.00.
+- Wire Transfer (Domestic Outbound): $20.00 online ($30.00 branch assisted).
+- International Inbound Wire: $15.00; International Outbound Wire (USD): $45.00.

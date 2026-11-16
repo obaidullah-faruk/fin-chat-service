@@ -1,0 +1,44 @@
+# Meridian Private Client Debit Card - Premier Tier Terms, Elevated Limits & Global Banking Privileges
+
+MERIDIAN TRUST & SAVINGS BANK
+MERIDIAN PRIVATE CLIENT DEBIT CARD
+PREMIER TIER TERMS, ELEVATED LIMITS & GLOBAL PRIVILEGES DISCLOSURE
+Effective Date: January 1, 2026
+
+1. ELITE PROGRAM OVERVIEW & RELATIONSHIP ELIGIBILITY
+The Meridian Private Client Debit Card is an exclusive, premier-tier financial instrument crafted exclusively for Meridian Private Banking and Wealth Management clients. Requiring a minimum qualifying aggregate balance of $250,000 across qualifying deposits, trusts, and investment accounts, this distinguished brushed-metal debit card provides unmatched liquidity access, global convenience, and customized concierge support.
+
+2. ELEVATED DAILY TRANSACTION LIMITS
+Reflecting the financial stature of Private Wealth clientele, this card provides extraordinary liquidity allowances across every 24-hour cycle:
+
+- Elevated Daily ATM Withdrawal Limit: $5,000.00 per calendar day. Enables immediate cash access at automated tellers worldwide without requiring branch visits.
+- Elevated Daily Point-of-Sale (POS) Purchase Limit: $15,000.00 per calendar day. Covers high-value merchant purchases, luxury retail, fine art acquisitions, and auction transactions.
+- Bespoke Transaction Pre-Authorization: For extraordinary single transactions exceeding $15,000 (up to $50,000.00 POS limit), Private Banking clients may obtain instantaneous pre-authorization via their dedicated Private Client Relationship Manager or through the 24/7 Wealth Concierge desk.
+
+3. GLOBAL BANKING PRIVILEGES & ZERO-FEE ARCHITECTURE
+The Meridian Private Client relationship waives standard transactional overhead:
+- 100% Worldwide ATM Surcharge Rebates: Enjoy completely unrestricted cash access at any ATM terminal worldwide. Meridian assesses no out-of-network fees and provides automatic, unlimited reimbursement of all third-party ATM operator surcharges credited directly to your checking account at the close of each business day.
+- Zero Foreign Exchange Surcharges (0.00% FX): No currency conversion charges, cross-border settlement fees, or international transaction penalties. All foreign expenditures and international cash withdrawals convert at interbank wholesale foreign exchange spot rates.
+- Unlimited Complimentary Wire Transfers: 100% fee waiver for all incoming and outgoing domestic wire transfers and international foreign currency/SWIFT wire transfers initiated online, through the mobile app, or via your Relationship Banker.
+- Complimentary Ancillary Banking Services: Free cashier's checks, bank drafts, counter checks, deluxe custom check orders, stop payment orders, and an annual credit toward a safety deposit box at any Meridian branch location.
+
+4. COMPREHENSIVE CARDHOLDER SAFEGUARDS & PURCHASE PROTECTIONS
+As a Visa Signature Debit cardholder, you receive enhanced commercial-grade consumer protections:
+- Extended Warranty Protection: Automatically doubles the original manufacturer's U.S. repair warranty period by up to one (1) additional full year on warranties of three (3) years or less when purchasing items with your card.
+- Purchase Security & Protection: Replaces, repairs, or reimburses eligible items purchased with your card against accidental damage, breakage, vandalism, or theft within ninety (90) days of purchase date (up to $10,000.00 per claim, $50,000.00 annual aggregate maximum).
+- Comprehensive Zero Liability Guarantee: Total financial indemnification against any fraudulent, unauthorized, or compromised transactions. Private Client accounts receive proactive, VIP fraud monitoring with a designated fraud resolution specialist assigned immediately upon detection of anomalous activity.
+- Emergency Cash & Replacement Card Dispatch: If your card is misplaced, damaged, or stolen while traveling anywhere globally, the Private Client Concierge arranges priority courier delivery of a replacement card within 24 hours and coordinates emergency cash delivery to your hotel or embassy.
+
+5. 24/7 DEDICATED PRIVATE CLIENT WEALTH CONCIERGE
+Enjoy direct, unscripted access to our executive lifestyle and travel concierge team:
+- Worldwide Travel Coordination: Private jet charter liaison, yacht charters, luxury villa accommodations, and VIP airport meet-and-greet services.
+- Priority Dining & Event Reservations: Preferred seating and reserved tables at Michelin-starred restaurants, sold-out theatre tickets, and exclusive sporting events.
+- Priority Banker Access: Direct telephone routing bypassing general automated call queues, connecting directly to your dedicated private wealth management team.
+Dedicated Private Client Line: 1-800-777-MTSB (6872) | International Direct: +1-704-555-0199
+Email: privateclient@meridianbank.com | Secure Web: meridianbank.com/privateclient
+
+6. CARD ACTIVATION & BIOMETRIC AUTHENTICATION
+Activate your metal Private Client Debit Card:
+1. Direct Banker Activation: Your Private Relationship Manager can activate your card immediately upon issuance.
+2. Private Client Mobile App: Log in with Face ID or Touch ID, navigate to 'Private Client Services', and confirm receipt of card.
+3. Concierge Activation: Call the dedicated 24/7 concierge at 1-800-777-MTSB.

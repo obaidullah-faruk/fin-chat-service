@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'apps.cheque',
     'apps.endorsement',
     'apps.chat',
+    'apps.knowledge',
 ]
 
 MIDDLEWARE = [

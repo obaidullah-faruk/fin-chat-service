@@ -1,0 +1,96 @@
+MERIDIAN TRUST & SAVINGS BANK
+COMMERCIAL REAL ESTATE & SMALL BUSINESS LENDING BASE RATES
+Effective Date: November 1, 2026 | Last Updated: November 15, 2026
+Headquarters: 100 Meridian Plaza, Charlotte, NC 28202 | Member FDIC | Equal Housing Lender
+
+================================================================================
+1. INDEX BENCHMARKS & LENDING FRAMEWORK
+================================================================================
+Meridian Trust & Savings Bank provides comprehensive capital solutions for commercial enterprises, property investors, and small businesses. All commercial loans are subject to underwriting review by the MTSB Commercial Credit Committee.
+
+Core Reference Benchmark Indices (as of November 1, 2026):
+- Meridian Trust Bank Prime Rate: 7.75% (pegged to Wall Street Journal Prime Rate)
+- 1-Month Term SOFR (Secured Overnight Financing Rate): 4.85%
+- 5-Year US Treasury Benchmark: 4.15%
+- 10-Year US Treasury Benchmark: 4.30%
+
+Underwriting Standards:
+- Minimum Debt Service Coverage Ratio (DSCR): 1.25x for owner-occupied real estate; 1.30x for non-owner occupied investor commercial real estate.
+- Maximum Loan-to-Value (LTV): 70% to 80% depending on asset class and tenancy.
+- Personal Guaranty: Required for all individuals owning 20% or greater equity interest in the borrowing entity.
+
+================================================================================
+2. COMMERCIAL REAL ESTATE (CRE) TERM FINANCING
+================================================================================
+MTSB offers balance sheet portfolio financing for owner-occupied industrial, professional office, retail, healthcare, and multifamily properties.
+
+Owner-Occupied Commercial Real Estate (Borrowing entity occupies 51%+ of rentable square footage):
+-----------------------------------------------------------------------------------------------------------------
+Financing Structure    Base Pricing Formula    Current Indicative Rate    Amortization    Max LTV    Min DSCR
+-----------------------------------------------------------------------------------------------------------------
+5-Year Fixed Term      Prime + 0.75% to 1.50%  8.50% - 9.25%              20 - 25 Years   80%        1.25x
+10-Year Fixed Term     Prime + 1.00% to 1.75%  8.75% - 9.50%              20 - 25 Years   75%        1.25x
+5/5 Adjustable Rate    5-Yr Treasury + 3.25%   7.40% (Initial 5 Yrs)      20 - 25 Years   80%        1.25x
+-----------------------------------------------------------------------------------------------------------------
+
+Non-Owner Occupied & Investor CRE (Multifamily 5+ Units, Anchored Retail, Light Industrial):
+-----------------------------------------------------------------------------------------------------------------
+Financing Structure    Base Pricing Formula    Current Indicative Rate    Amortization    Max LTV    Min DSCR
+-----------------------------------------------------------------------------------------------------------------
+5-Year Fixed Balloon   Prime + 1.25% to 2.25%  9.00% - 10.00%             20 - 25 Years   70%        1.30x
+10-Year Fixed Balloon  Prime + 1.50% to 2.50%  9.25% - 10.25%             20 - 25 Years   65%        1.35x
+Floating Rate Credit   1-Mo SOFR + 3.25%-4.25% 8.10% - 9.10% (Floor 7.0%) 20 - 25 Years   70%        1.30x
+-----------------------------------------------------------------------------------------------------------------
+
+Prepayment Schedules on CRE Loans:
+Standard 5-4-3-2-1% declining step-down prepayment penalty or Yield Maintenance options available upon request.
+
+================================================================================
+3. SMALL BUSINESS ADMINISTRATION (SBA) GUARANTEED LENDING
+================================================================================
+Meridian Trust & Savings Bank is designated as an SBA Preferred Lender (PLP), granting expedited in-house credit decisions without prior SBA agency review.
+
+SBA 7(a) Working Capital, Equipment & Business Acquisition Loans:
+Government-guaranteed term loans designed for creditworthy small businesses unable to obtain conventional credit under reasonable terms.
+- Maximum Loan Amount: $5,000,000.00.
+- SBA Guarantee: Up to 85% for loans <= $150,000; up to 75% for loans > $150,000.
+- Permitted Spreads Over Wall Street Journal Prime Rate (Maximum allowable rates under SBA regulations):
+-----------------------------------------------------------------------------------------------------------------
+Loan Size Tier              Spread Formula            Current Floating Rate    Standard Maturity Term
+-----------------------------------------------------------------------------------------------------------------
+Up to $50,000.00            WSJ Prime + 4.25%         12.00% Variable          10 Years (25 Yrs for Real Estate)
+$50,001 to $250,000         WSJ Prime + 3.25%         11.00% Variable          10 Years (25 Yrs for Real Estate)
+$250,001 to $5,000,000      WSJ Prime + 2.75%         10.50% Variable          10 Years (25 Yrs for Real Estate)
+-----------------------------------------------------------------------------------------------------------------
+
+SBA Express Revolving Lines of Credit:
+- Maximum Line Amount: $500,000.00 (50% SBA Guarantee).
+- Pricing Formula: WSJ Prime + 4.50% (12.25% variable rate).
+- Turnaround Time: Initial credit decision within 36 business hours.
+
+SBA 504 Real Estate & Heavy Machinery Fixed-Asset Financing:
+Combines two loans with low borrower equity requirement (typically 10% down):
+1. First Mortgage (MTSB Bank Share - 50% LTV):
+   - 10-Year or 20-Year Conventional Fixed Term at Prime + 0.50% (currently 8.25%).
+2. Second Mortgage (Certified Development Company / SBA Debenture - 40% LTV):
+   - Fully amortizing 20-year or 25-year fixed debenture backed by 10-Year US Treasury + 1.85% spread (indicative effective borrowing rate ~6.65% including all servicing and CDC fees).
+3. Borrower Equity: 10% minimum (15% for special-use properties or new businesses).
+
+================================================================================
+4. COMMERCIAL LINES OF CREDIT (WORKING CAPITAL)
+================================================================================
+Revolving credit facilities structured to support inventory financing, accounts receivable cycles, and seasonal working capital requirements.
+- Commitment Sizes: $100,000.00 to $10,000,000.00.
+- Variable Pricing Formula: WSJ Prime + 1.00% to Prime + 3.00% floating based on borrower liquidity and leverage.
+- Borrowing Base Formula: Up to 80% of eligible accounts receivable (< 90 days) plus up to 50% of finished goods inventory.
+- Annual Facility Review Fee: 0.25% of committed line limit.
+- Unused Line Fee: 0.15% per annum on average unused portion, billed quarterly.
+
+================================================================================
+5. FEES, COVENANTS & CLOSING EXPENSES
+================================================================================
+- Commercial Loan Origination Fee: 0.75% to 1.25% of committed facility amount.
+- SBA Guaranty Fee: Statutory fee established by SBA regulations (waived for veterans under SBA Veterans Advantage).
+- Environmental Review Fee: Phase I Environmental Site Assessment ($2,500 - $3,500) where required.
+- Commercial Property Appraisal Fee: Independent licensed MAI commercial appraisal ($3,000 - $6,500 depending on complexity).
+- Standard Reporting Covenants: Submission of annual audited or reviewed financial statements within 120 days of fiscal year-end, and interim quarterly balance sheet and P&L statements within 45 days of quarter-end.

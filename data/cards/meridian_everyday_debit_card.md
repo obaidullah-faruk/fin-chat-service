@@ -1,0 +1,45 @@
+# Meridian Everyday Debit Card - Cardholder Agreement, Daily Transaction Limits & Electronic Banking Disclosures
+
+MERIDIAN TRUST & SAVINGS BANK
+MERIDIAN EVERYDAY DEBIT CARD
+CARDHOLDER AGREEMENT, DAILY TRANSACTION LIMITS & ELECTRONIC FUNDS TRANSFER DISCLOSURE
+Effective Date: January 1, 2026
+
+1. GENERAL ACCOUNT RELATIONSHIP
+The Meridian Everyday Debit Card is issued by Meridian Trust & Savings Bank (MTSB), Member FDIC. This card links directly to your qualifying consumer deposit account (Meridian Everyday Checking, Student Checking, or Opportunity Checking) and enables convenient electronic access to your deposited funds for point-of-sale (POS) purchases and Automated Teller Machine (ATM) transactions.
+
+2. DAILY TRANSACTION & CASH ACCESS LIMITS
+To protect your account against unauthorized withdrawals and maintain risk standards, daily transaction limits apply per debit card over a 24-hour cycle (commencing at 12:00:00 AM Eastern Time daily):
+
+- Daily ATM Cash Withdrawal Limit: $1,000.00 per calendar day. This limit encompasses all cash withdrawals, transfers, and cash disbursements initiated at any domestic or international ATM terminal.
+- Daily Point-of-Sale (POS) Purchase Limit: $3,000.00 per calendar day. Applies to signature, PIN-debit, contactless, online e-commerce, and mobile wallet transactions.
+- Temporary Limit Elevation: If you require a temporary increase to facilitate a high-dollar purchase (e.g., home furnishings, auto repairs), you may request a temporary limit adjustment up to $2,500.00 ATM / $5,000.00 POS via the Meridian Mobile Banking app or by contacting Customer Care. Approved temporary adjustments expire automatically after forty-eight (48) hours.
+
+3. ATM FEES & SURCHARGE WAIVER RULES
+- Meridian & In-Network ATMs: Unlimited free transactions at all Meridian Trust & Savings Bank branch ATMs and over 45,000 surcharge-free Allpoint network ATMs across the United States, Canada, and the United Kingdom.
+- Out-of-Network Domestic ATMs: $2.50 fee assessed by MTSB for each withdrawal conducted at a third-party non-affiliated ATM terminal. In addition, the independent ATM operator may impose an additional surcharge fee.
+- Monthly ATM Fee Reimbursement: As a loyalty benefit, MTSB automatically waives up to two (2) out-of-network domestic ATM withdrawal fees (up to $5.00 total) per monthly statement cycle for active checking accounts.
+- International ATM Transactions: $5.00 MTSB transaction fee per foreign ATM withdrawal, plus a 2.50% foreign exchange conversion fee based on the converted U.S. dollar amount.
+
+4. CARD SECURITY, CONTACTLESS CHIP & FRAUD PROTECTION
+- Contactless EMV Smart Chip: Your card features an embedded cryptographic microprocessor chip that produces a unique, one-time security code for every terminal transaction, preventing card skimming and magnetic stripe counterfeiting. Tap-to-pay capability is supported at all NFC-enabled terminals.
+- Digital Tokenization: Support for Apple Pay, Google Wallet, and Samsung Pay ensures your actual 16-digit debit card number is never shared with merchants during transactions.
+- Meridian CardShield Mobile Controls: Instantly lock and unlock your debit card with a single tap in the mobile app if misplaced. Configure granular merchant category filters, set international usage locks, or configure instant push notifications for transactions over user-defined dollar amounts.
+- Visa Zero Liability Protection: Under Visa network guidelines, you have zero liability for unauthorized point-of-sale or online debit transactions, provided you exercise reasonable care in protecting your card and PIN and promptly report the unauthorized charge.
+
+5. REGULATION E - ELECTRONIC FUNDS TRANSFER RIGHTS & LIABILITY FOR UNAUTHORIZED TRANSFERS
+Notify MTSB immediately if you believe your card or PIN has been lost, stolen, or compromised:
+- If notified within two (2) business days after learning of the loss or theft, your liability will not exceed $50.00.
+- If notified after two (2) business days but within sixty (60) calendar days after transmittal of the periodic statement showing the unauthorized transfer, your liability will not exceed $500.00.
+- If you fail to notify the bank within sixty (60) calendar days after your periodic account statement was sent, you may be held liable for all unauthorized transfers occurring after the 60 days if the bank can prove the transfer could have been prevented had notice been given.
+
+To report fraud or disputes:
+Call: 1-800-555-MTSB (6872) (Available 24/7/365)
+Online: Log in to meridianbank.com/disputes
+Mail: Meridian Trust & Savings Bank, Electronic Fraud Division, PO Box 4410, Charlotte, NC 28202
+
+6. CARD ACTIVATION & PIN MANAGEMENT
+Upon receipt of your physical card:
+1. Mobile Activation: Open the mobile banking app, navigate to 'Card Services', select 'Activate Debit Card', and input the 3-digit CVV from the signature panel.
+2. ATM Activation: Insert the card into any Meridian ATM and enter the initial secure PIN issued via separate mailer; you will be immediately prompted to choose a personalized 4-digit PIN.
+3. Telephone Activation: Dial 1-800-555-MTSB (6872) and select option 1 for Automated Card Activation.

@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/v1/cheque/', include('apps.cheque.urls')),
     path('api/v1/endorsements/', include('apps.endorsement.urls')),
     path('api/v1/chat/', include('apps.chat.urls')),
+    path('api/v1/admin/knowledge-base/', include('apps.knowledge.urls')),
     # Internal service-to-service endpoints (MCP servers only)
     path('internal/banking/', include('apps.banking.internal_urls')),
     path('internal/service/', include('apps.cheque.internal_urls')),

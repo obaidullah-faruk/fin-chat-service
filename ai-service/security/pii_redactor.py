@@ -14,8 +14,31 @@ DEFAULT_REPLACEMENTS: dict[str, str] = {
     "CREDIT_CARD": "<CREDIT_CARD>",
     "IP_ADDRESS": "<IP_ADDRESS>",
     "US_SSN": "<SSN>",
+    "US_BANK_NUMBER": "<ACCOUNT_NUMBER>",
+    "IBAN_CODE": "<ACCOUNT_NUMBER>",
+    "US_PASSPORT": "<PASSPORT>",
+    "US_DRIVER_LICENSE": "<DRIVER_LICENSE>",
+    "CRYPTO": "<CRYPTO_ADDRESS>",
     "DEFAULT": "<REDACTED>",
 }
+
+# Standard financial PII entities to detect. Excludes broad NER entities like
+# ORGANIZATION, LOCATION, DATE_TIME, and URL which cause catastrophic false
+# positives on banking products, CD terms, and institution names.
+BANKING_PII_ENTITIES: list[str] = [
+    "BD_NID",
+    "BANK_ACCOUNT",
+    "PHONE_NUMBER",
+    "EMAIL_ADDRESS",
+    "CREDIT_CARD",
+    "IP_ADDRESS",
+    "US_SSN",
+    "US_BANK_NUMBER",
+    "IBAN_CODE",
+    "US_PASSPORT",
+    "US_DRIVER_LICENSE",
+    "CRYPTO",
+]
 
 try:
     from presidio_analyzer import AnalyzerEngine, Pattern, PatternRecognizer
@@ -81,6 +104,7 @@ class BasePIIRedactor(abc.ABC):
         self,
         text: str,
         replacements: dict[str, str] | None = None,
+        entities: list[str] | None = None,
     ) -> RedactionResult:
         """Scan text and mask sensitive PII entities."""
         pass
@@ -96,6 +120,7 @@ class RegexPIIRedactor(BasePIIRedactor):
         self,
         text: str,
         replacements: dict[str, str] | None = None,
+        entities: list[str] | None = None,
     ) -> RedactionResult:
         if not text:
             return RedactionResult(
@@ -215,6 +240,9 @@ class RegexPIIRedactor(BasePIIRedactor):
                     text=match.group(),
                 )
             )
+
+        if entities is not None:
+            detected = [e for e in detected if e.entity_type in entities]
 
         if not detected:
             return RedactionResult(
@@ -337,6 +365,7 @@ class PresidioPIIRedactor(BasePIIRedactor):
         self,
         text: str,
         replacements: dict[str, str] | None = None,
+        entities: list[str] | None = None,
     ) -> RedactionResult:
         if not text:
             return RedactionResult(
@@ -347,10 +376,12 @@ class PresidioPIIRedactor(BasePIIRedactor):
             )
 
         rep_map = {**DEFAULT_REPLACEMENTS, **(replacements or {})}
+        target_entities = entities if entities is not None else BANKING_PII_ENTITIES
 
         # Run Presidio Analyzer
         analyzer_results = self._analyzer.analyze(
             text=text,
+            entities=target_entities,
             language="en",
             score_threshold=0.5,
         )
@@ -436,23 +467,28 @@ def set_pii_redactor(redactor: BasePIIRedactor | None) -> None:
 def redact_pii(
     text: str,
     replacements: dict[str, str] | None = None,
+    entities: list[str] | None = None,
 ) -> RedactionResult:
     """
     Detect and mask PII in text before it reaches any LLM.
     Returns RedactionResult containing redacted_text and detected entities.
     """
     redactor = get_pii_redactor()
-    return redactor.redact(text, replacements=replacements)
+    return redactor.redact(text, replacements=replacements, entities=entities)
 
 
 def redact_text(
     text: str,
     replacements: dict[str, str] | None = None,
+    entities: list[str] | None = None,
 ) -> str:
     """Convenience helper returning directly the masked string."""
-    return redact_pii(text, replacements=replacements).redacted_text
+    return redact_pii(text, replacements=replacements, entities=entities).redacted_text
 
 
-def is_pii_present(text: str) -> bool:
+def is_pii_present(
+    text: str,
+    entities: list[str] | None = None,
+) -> bool:
     """Quick boolean check if text contains detectable PII."""
-    return redact_pii(text).has_pii
+    return redact_pii(text, entities=entities).has_pii

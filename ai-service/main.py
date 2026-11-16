@@ -28,6 +28,7 @@ from schemas.chat import ChatRequest, ChatResponse
 from security.auth import verify_internal_caller
 from security.pii_redactor import DEFAULT_REPLACEMENTS, redact_pii
 from streaming import StreamEventPublisher
+from knowledge.routes import router as knowledge_router
 
 logger = logging.getLogger("finchat.ai_service")
 
@@ -58,12 +59,19 @@ async def lifespan(_app: FastAPI):
         )
     except Exception as exc:
         logger.warning("Deferred MCP tool discovery on startup: %s", exc)
+    try:
+        from knowledge.store import get_knowledge_store
+        get_knowledge_store().ensure_collection()
+        logger.info("Startup: Qdrant knowledge collection initialized.")
+    except Exception as exc:
+        logger.warning("Deferred Knowledge collection initialization on startup: %s", exc)
     yield
     await close_checkpointer()
     await dispose_db()
 
 
 app = FastAPI(title="FinChat AI Service", version="0.1.0", lifespan=lifespan)
+app.include_router(knowledge_router)
 
 
 def get_ai_repository() -> AIRepository:

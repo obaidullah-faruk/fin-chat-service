@@ -1,0 +1,114 @@
+# Meridian Trust & Savings Bank: Electronic Funds Transfer (EFT) Dispute & Zero Liability Fraud Policy
+
+MERIDIAN TRUST & SAVINGS BANK
+ELECTRONIC FUNDS TRANSFER (EFT) DISPUTE RESOLUTION
+AND ZERO LIABILITY FRAUD POLICY
+Document ID: MTSB-POL-EFT-2026-04
+Effective Date: January 15, 2026 | Last Annual Board Review: November 12, 2025
+Governing Regulation: CFPB Regulation E (12 CFR Part 1005) & EFTA (15 U.S.C. § 1693 et seq.)
+
+================================================================================
+SECTION 1: SCOPE AND DEFINITIONS
+================================================================================
+Meridian Trust & Savings Bank ("MTSB") provides comprehensive electronic fund transfer services to consumer deposit account holders. This Policy outlines consumer rights, liability limits, and the Bank's operational responsibilities regarding error resolution and fraudulent transactions pursuant to the Electronic Fund Transfer Act (EFTA, 15 U.S.C. § 1693 et seq.) and CFPB Regulation E (12 CFR Part 1005).
+
+1.1 Covered Electronic Fund Transfers (12 CFR § 1005.3):
+This Policy applies to any transfer of funds initiated through an electronic terminal, telephone, computer, or magnetic tape that instructs, authorizes, or orders MTSB to debit or credit a consumer's checking, savings, or other consumer asset account. Covered transfers include:
+- Point-of-Sale (POS) debit card transactions (in-store chip, contactless, or online e-commerce).
+- Automated Teller Machine (ATM) cash withdrawals, transfers, and deposits.
+- Automated Clearing House (ACH) direct debits, preauthorized payments, and payroll transfers.
+- MTSB Online & Mobile Bill Pay transactions and external account-to-account (A2A) transfers.
+- Peer-to-Peer (P2P) transfers (e.g., Zelle / MTSB Send) initiated through consumer digital banking.
+- Electronic check conversion (converting paper checks into electronic debits at checkout).
+
+1.2 Non-Covered Transactions:
+- Wire transfers processed through Fedwire or CHIPS (governed by Uniform Commercial Code Article 4A and Regulation J).
+- Commercial and business deposit accounts (governed by commercial contract and Nacha corporate rules).
+- Securities and commodities transfers regulated by the SEC or CFTC.
+
+================================================================================
+SECTION 2: CONSUMER LIABILITY FOR UNAUTHORIZED TRANSFERS (12 CFR § 1005.6)
+================================================================================
+An unauthorized electronic fund transfer is an EFT from a consumer's account initiated by a person other than the consumer without actual authority to initiate the transfer, and from which the consumer receives no direct or indirect benefit.
+
+2.1 Statutory Liability Tiers Under Regulation E:
+1. Tier 1: Two-Day Reporting Window ($50 Maximum Liability):
+   - If the consumer notifies MTSB within two (2) business days after learning of the loss, theft, or compromise of their debit card, PIN, or access credentials, the consumer's liability for unauthorized transactions shall not exceed the lesser of $50 or the total amount of unauthorized transfers that occurred before notice to the Bank.
+2. Tier 2: Sixty-Day Statement Window ($500 Maximum Liability):
+   - If the consumer fails to notify MTSB within two (2) business days after learning of the loss or theft of the access device, but notifies the Bank within sixty (60) calendar days of the transmittal of the periodic statement showing unauthorized transfers, consumer liability shall not exceed the lesser of $500, or the sum of:
+     a) $50 or the amount of unauthorized transfers occurring within the first two business days; plus
+     b) The amount of unauthorized transfers that occurred after the close of two business days and before notice to the Bank (provided the Bank establishes that such transfers would not have occurred had timely notice been given).
+3. Tier 3: Post-60-Day Unlimited Liability:
+   - If unauthorized transfers appear on an account statement and the consumer fails to notify MTSB within sixty (60) calendar days after the Bank transmits the periodic statement, the consumer faces UNLIMITED liability for all unauthorized transfers that occur after the close of the 60-day period and up to the time the Bank is notified, if the Bank establishes that the transfers would not have occurred had the consumer reported them within the 60 days.
+4. Extenuating Circumstances Extension:
+   - If the consumer's delay in notifying MTSB was due to extenuating circumstances (e.g., extended travel abroad, severe hospitalization, incapacitation), the reporting timeframe will be reasonably extended.
+
+================================================================================
+SECTION 3: MTSB ZERO LIABILITY FRAUD GUARANTEE
+================================================================================
+As an institutional commitment exceeding baseline statutory requirements, MTSB provides a Zero Liability Fraud Guarantee for consumer debit card transactions processed over the Visa/Mastercard networks:
+- $0 Consumer Liability: Consumers are subject to $0 liability for fraudulent, unauthorized card-present, card-not-present (online), and contactless transactions conducted using an MTSB Debit Card.
+- Eligibility Conditions: The Zero Liability Guarantee applies provided the cardholder:
+  1. Exercised reasonable care in safeguarding the debit card and PIN against loss, theft, or unauthorized disclosure;
+  2. Did not act fraudulently or with gross negligence; and
+  3. Promptly reports the unauthorized transaction to MTSB upon discovery.
+- In instances where gross negligence is established (e.g., writing the PIN directly on the physical debit card and storing them together in an unmonitored location), statutory Regulation E tiers (Section 2) govern.
+
+================================================================================
+SECTION 4: ERROR RESOLUTION PROCEDURES & TIMELINES (12 CFR § 1005.11)
+================================================================================
+4.1 Definition of Error:
+Under 12 CFR § 1005.11(a), an error includes:
+- Unauthorized electronic fund transfers;
+- Incorrect electronic fund transfers to or from the consumer's account;
+- Omission of an EFT from a periodic statement;
+- Computational or bookkeeping errors made by MTSB;
+- Consumer receipt of an incorrect amount of currency from an ATM or cash dispenser;
+- Preauthorized transfers debited without authorization or in improper amounts; and
+- Consumer requests for documentation, clarification, or proof of an EFT.
+
+4.2 Notice of Error from Consumer
+A consumer may submit notice of error orally or in writing within sixty (60) calendar days after MTSB sends the periodic statement showing the error.
+- Required Information: Consumer's name, account number, description of the suspected error, transaction date, dollar amount, and explanation of why the consumer believes an error occurred.
+- Written Confirmation: If oral notice is provided, MTSB may require the consumer to submit written confirmation (or complete a formal Written Statement of Unauthorized Debit [WSUD]) within ten (10) business days of the oral notice.
+
+4.3 Investigation Timeframes & Mandatory Provisional Credit (12 CFR § 1005.11(c))
+1. Standard 10-Day Rule:
+   - MTSB investigates and determines whether an error occurred within ten (10) business days of receiving the consumer's notice of error.
+   - If an error occurred, MTSB corrects the error and credits the account within one (1) business day of determination.
+2. 45-Day Investigation & Provisional Credit:
+   - If MTSB is unable to complete its investigation within ten (10) business days, the Bank MUST issue a PROVISIONAL CREDIT to the consumer's account for the full amount of the alleged error (including applicable interest if the account earns interest), less up to $50 if statutory liability applies.
+   - Provisional credit must be posted within ten (10) business days of the initial notice.
+   - The Bank then has up to forty-five (45) calendar days from receipt of notice to conclude its investigation.
+3. Extended 90-Day Investigation:
+   - The investigation timeframe extends from 45 calendar days to ninety (90) calendar days if the transaction:
+     a) Was initiated outside the United States (foreign transactions);
+     b) Resulted from a Point-of-Sale (POS) debit card transaction; or
+     c) Occurred within thirty (30) calendar days after the first deposit to the account (New Account Exception).
+   - In all such cases, provisional credit must still be posted within ten (10) business days (or within 20 business days for new accounts).
+4. Withholding Provisional Credit:
+   - If MTSB requested written confirmation within 10 business days of oral notice and the consumer failed to deliver written confirmation within that window, the Bank is not legally required to issue provisional credit, but must still complete its investigation within 45 (or 90) calendar days.
+
+4.4 Final Resolution, Findings & Rights
+- Determination That Error Occurred: MTSB makes the provisional credit permanent within one (1) business day of concluding the investigation, refunds all associated overdraft or service fees caused by the error, and mails written confirmation to the consumer within three (3) business days.
+- Determination That No Error Occurred (or Different Error):
+  * MTSB mails a written explanation of findings to the consumer within three (3) business days of concluding the investigation, informing the consumer of their right to inspect and receive copies of all documentation relied upon by the Bank.
+  * Debit of Provisional Credit: MTSB notifies the consumer of the exact date and amount of provisional credit debit. The Bank will honor checks, drafts, and preauthorized ACH debits payable to third parties without assessing overdraft or NSF fees for five (5) business days following notification of provisional credit revocation, up to the amount of the revoked provisional credit.
+
+================================================================================
+SECTION 5: PREAUTHORIZED TRANSFERS & STOP PAYMENT RIGHTS (12 CFR § 1005.10)
+================================================================================
+- Stop Payment Right: Consumers have the right to stop payment of any preauthorized recurring electronic fund transfer by notifying MTSB orally or in writing at least three (3) business days before the scheduled transfer date.
+- Written Confirmation: If stop payment is ordered orally, MTSB may require written confirmation within fourteen (14) calendar days.
+- Notice of Varying Amounts: When a recurring preauthorized transfer will vary in amount from the previous transfer, the designated originator must send written notice at least ten (10) calendar days before the scheduled transfer date.
+
+================================================================================
+SECTION 6: REPORTING CONTACT INFORMATION
+================================================================================
+To report lost or stolen debit cards, compromised digital credentials, or unauthorized electronic transfers immediately:
+- Phone: 1-800-555-MTSB (1-800-555-6872) - Available 24/7/365
+- Online: Log in to Online/Mobile Banking > Security Center > "Report Lost/Stolen Card" or "Dispute a Transaction"
+- Written Notice:
+  Meridian Trust & Savings Bank
+  Attn: Payment Operations & Dispute Resolution Department
+  P.O. Box 44100, Chicago, IL 60601

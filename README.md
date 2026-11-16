@@ -1,6 +1,6 @@
 # FinChat Service
 
-FinChat Service is a financial banking and assistant platform built with Django REST Framework (ASGI via Uvicorn), FastAPI, PostgreSQL 18, Redis 8, and React (Vite + Material UI). It provides role-based access control, account management, deposits, withdrawals, transfers, cheque book requests, USD currency endorsements, address management, structured JSON logging, and a multi-service chat pipeline.
+FinChat Service is a financial banking and assistant platform built with Django REST Framework (ASGI via Uvicorn), FastAPI, PostgreSQL 18, Redis 8, Qdrant 1.20, and React (Vite + Material UI). It provides role-based access control, account management, deposits, withdrawals, transfers, cheque book requests, USD currency endorsements, address management, structured JSON logging, a multi-service chat pipeline, and a local Retrieval-Augmented Generation (RAG) knowledge engine powered by FastEmbed and Qdrant.
 
 ![FinChat Architecture](./diagram/architecture_bw.png)
 
@@ -8,15 +8,16 @@ FinChat Service is a financial banking and assistant platform built with Django 
 
 ```text
 fin-chat-service/
-├── backend/              Django REST API (ASGI), PostgreSQL models, seeder, tests
-├── frontend/             React + TypeScript + Material UI application
-├── ai-service/           FastAPI AI orchestration service (echo plumbing)
+├── backend/              Django REST API (ASGI), PostgreSQL models, seeder, tests, knowledge app
+├── frontend/             React + TypeScript + Material UI application (with Admin Knowledge Base)
+├── ai-service/           FastAPI AI orchestration service, LangGraph coordinator, RAG engine
 ├── accounts-mcp/         Accounts MCP server 
 ├── transactions-mcp/     Transactions MCP server 
 ├── service-mcp/          Service MCP server 
+├── data/                 Bank knowledge corpus (policies, interest rates, cards, offers in PDF, DOCX, MD, TXT, JSON)
 ├── diagram/              Architecture diagrams and generator scripts
 ├── ARCHITECTURE_GUIDE.md Architecture & phased implementation guide
-├── docker-compose.yml    PostgreSQL 18 (bank-db, ai-db), Redis 8, backend, AI, and MCP services
+├── docker-compose.yml    PostgreSQL 18 (bank-db, ai-db), Redis 8, Qdrant 1.20, backend, AI, and MCP services
 ├── .env.example          Environment configuration template
 └── README.md
 ```
@@ -56,17 +57,29 @@ docker compose up --build --remove-orphans
 
 (`--remove-orphans` cleanly removes the legacy `db` container if upgrading from the initial setup while keeping the `pgdata` volume.)
 
-This starts `bank-db` (`:5432`), `ai-db` (`:5433`), `redis` (`:6379`), the Django backend (`:8000` via Uvicorn), `ai-service` (`:8001`), and the three MCP placeholder servers (`:8002`–`:8004`), runs database migrations, and seeds initial roles and test users.
+This starts `bank-db` (`:5432`), `ai-db` (`:5433`), `redis` (`:6379`), `qdrant` (`:6333`), the Django backend (`:8000` via Uvicorn), `ai-service` (`:8001`), and the three MCP placeholder servers (`:8002`–`:8004`), runs database migrations, and seeds initial roles and test users.
 
 - Backend API: `http://localhost:8000/api/v1/`
 - Swagger UI: `http://localhost:8000/api/schema/swagger-ui/`
 - Backend Health Check: `http://localhost:8000/api/v1/health/`
 - AI Service Health Check: `http://localhost:8001/health`
+- Qdrant Web Dashboard: `http://localhost:6333/dashboard`
+- Qdrant Health Check: `http://localhost:6333/readyz`
 - Accounts MCP Health Check: `http://localhost:8002/health`
 - Transactions MCP Health Check: `http://localhost:8003/health`
 - Service MCP Health Check: `http://localhost:8004/health`
 
-### 3. Start Frontend (Local)
+### 3. Seed Knowledge Base (RAG)
+
+To populate the Qdrant vector database with the initial baseline corpus of banking policies, interest rate schedules, card portfolios, and promotional offers from `data/`:
+
+```bash
+docker compose exec backend python manage.py seed_knowledge_base
+```
+
+*(You can also sync or upload new documents via the Admin UI at `http://localhost:5173/admin/knowledge-base`).*
+
+### 4. Start Frontend (Local)
 
 In a separate terminal:
 
@@ -90,6 +103,16 @@ All seeded users share the same password for local development: `Test@1234`
 | `customer1` | `customer1@finchat.local` | `customer` | `FC1000000001` | $10,000.00 |
 | `customer2` | `customer2@finchat.local` | `customer` | `FC1000000002` | $5,000.00 |
 | `customer3` | `customer3@finchat.local` | `customer` | `FC1000000003` | $2,500.00 |
+
+## Knowledge Base & RAG System
+
+FinChat includes an enterprise-grade Retrieval-Augmented Generation (RAG) system for banking policies, interest rate schedules, card packages, and promotional offers:
+
+- **Vector Database**: Qdrant v1.20 (`:6333`, Web Dashboard at `http://localhost:6333/dashboard`).
+- **Embedding Engine**: FastEmbed (`BAAI/bge-small-en-v1.5`) running locally on CPU via ONNX Runtime with zero external API cost and 100% data privacy.
+- **Single Source of Truth**: Qdrant stores document metadata, chunks, and embeddings directly in payloads, keeping `bank-db` dedicated strictly to core transactional ledgers.
+- **Admin Management Panel**: Accessible to `admin` and `superadmin` at `http://localhost:5173/admin/knowledge-base` for document uploads (PDF, DOCX, TXT, MD, JSON), duplicate collision resolution, and local data syncing.
+- **AI Chat Knowledge Agent**: Users can ask questions about bank policies (overdraft privilege, dormancy, dispute resolution), interest rate tiers (savings APY, CD ladders, mortgage rates), credit/debit card portfolios, and promotional offers.
 
 ## Database Migrations
 

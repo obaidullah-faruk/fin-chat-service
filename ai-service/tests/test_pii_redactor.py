@@ -220,3 +220,19 @@ def test_get_pii_redactor_fallback_when_presidio_unavailable():
         redactor = get_pii_redactor()
         assert isinstance(redactor, RegexPIIRedactor)
 
+
+def test_banking_products_and_terms_not_over_redacted():
+    """Verify banking product names, durations, and terms are not falsely redacted."""
+    redactor = RegexPIIRedactor()
+    samples = [
+        "What are the features of the Altitude Elite Travel credit card?",
+        "What is the interest rate for 9-month Promotional CD?",
+        "Tell me about Freedom Flex Debit Card terms",
+        "What are the current offers for credit cards?",
+    ]
+    for sample in samples:
+        res = redactor.redact(sample)
+        assert res.has_pii is False
+        assert res.redacted_text == sample
+
+

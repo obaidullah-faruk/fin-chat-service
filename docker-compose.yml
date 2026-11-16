@@ -50,6 +50,7 @@ services:
     volumes:
       - ./backend:/app
       - ./backend/logs:/app/logs
+      - ./data:/app/data:ro
     env_file:
       - .env
     ports:
@@ -63,6 +64,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     volumes:
       - ./ai-service:/app
+      - ./data:/app/data:ro
     environment:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DJANGO_API_URL: http://backend:8000
@@ -71,6 +73,9 @@ services:
       ACCOUNTS_MCP_URL: ${ACCOUNTS_MCP_URL:-http://accounts-mcp:8002/mcp}
       TRANSACTIONS_MCP_URL: ${TRANSACTIONS_MCP_URL:-http://transactions-mcp:8003/mcp}
       SERVICE_MCP_URL: ${SERVICE_MCP_URL:-http://service-mcp:8004/mcp}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      KNOWLEDGE_COLLECTION_NAME: ${KNOWLEDGE_COLLECTION_NAME:-finchat_knowledge}
+      FASTEMBED_MODEL_NAME: ${FASTEMBED_MODEL_NAME:-BAAI/bge-small-en-v1.5}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
       GEMINI_TEMPERATURE: ${GEMINI_TEMPERATURE:-0.0}
@@ -84,12 +89,27 @@ services:
         condition: service_healthy
       ai-db:
         condition: service_healthy
+      qdrant:
+        condition: service_started
       accounts-mcp:
         condition: service_started
       transactions-mcp:
         condition: service_started
       service-mcp:
         condition: service_started
+
+  qdrant:
+    image: qdrant/qdrant:v1.20.0
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   accounts-mcp:
     build: ./accounts-mcp
@@ -136,3 +156,4 @@ services:
 volumes:
   pgdata:
   ai_pgdata:
+  qdrant_data:

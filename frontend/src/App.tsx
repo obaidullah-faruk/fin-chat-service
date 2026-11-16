@@ -3,6 +3,7 @@ import { AppLayout } from './components/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ChequeApprovalPage } from './pages/admin/ChequeApprovalPage';
 import { EndorsementApprovalPage } from './pages/admin/EndorsementApprovalPage';
+import { KnowledgeBasePage } from './pages/admin/KnowledgeBasePage';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { BankingOverviewPage } from './pages/banking/BankingOverviewPage';
@@ -52,6 +53,7 @@ export function App() {
 
           <Route element={<ProtectedRoute allowedRoles={['admin', 'superadmin']} />}>
             <Route path="/admin/users" element={<UserManagementPage />} />
+            <Route path="/admin/knowledge-base" element={<KnowledgeBasePage />} />
           </Route>
         </Route>
       </Route>

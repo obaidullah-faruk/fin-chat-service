@@ -1,0 +1,95 @@
+# Meridian Signature Cash Rewards Credit Card - Cardholder Agreement & Schumer Box Disclosures
+
+MERIDIAN TRUST & SAVINGS BANK
+MERIDIAN SIGNATURE CASH REWARDS CREDIT CARD
+CARDHOLDER AGREEMENT, PRICING INFORMATION & DISCLOSURE STATEMENT
+Effective Date: January 1, 2026
+
+1. PRODUCT OVERVIEW
+The Meridian Signature Cash Rewards Credit Card is issued by Meridian Trust & Savings Bank (MTSB), Member FDIC. This revolving consumer credit facility is designed for individuals seeking straightforward, high-value everyday cash rewards with no annual fee. Access to the Visa Signature global network provides enhanced merchant acceptance, premium concierge benefits, and robust transaction safeguards.
+
+2. INTEREST RATES AND INTEREST CHARGES (SCHUMER BOX DISCLOSURE)
+
+========================================================================================
+INTEREST RATES AND INTEREST CHARGES
+========================================================================================
+Annual Percentage Rate (APR) for Purchases:
+  0.00% Introductory APR for the first fourteen (14) billing cycles following account opening.
+  After that, your APR will be 18.24% to 28.24%, based on your creditworthiness when you open
+  your account. This APR will vary with the market based on the Prime Rate.
+
+APR for Balance Transfers:
+  0.00% Introductory APR for the first fourteen (14) billing cycles for transfers completed
+  within sixty (60) days of account opening.
+  After that, your APR will be 18.24% to 28.24%, based on your creditworthiness. This APR
+  will vary with the market based on the Prime Rate.
+
+APR for Cash Advances:
+  29.24% Variable APR. This APR will vary with the market based on the Prime Rate.
+
+Penalty APR and When It Applies:
+  29.99% Variable APR.
+  This APR may be applied to your account if you:
+    (a) Make one or more late payments (exceeding 60 days past due); or
+    (b) Make a payment that is returned unpaid by your depository institution.
+  How Long Will the Penalty APR Apply? If the Penalty APR is applied, it will remain in effect
+  indefinitely until you make six (6) consecutive on-time monthly payments and maintain your
+  account in good standing, at which point MTSB will review your account for rate reduction.
+
+Paying Interest (Grace Period):
+  Your due date is at least 25 days after the close of each billing cycle. MTSB will not charge
+  you interest on purchases if you pay your entire account balance (New Balance) in full by the
+  payment due date each month. Interest on cash advances and balance transfers begins accruing
+  on the transaction date.
+
+Minimum Interest Charge:
+  If you are charged interest, the charge will be no less than $1.50.
+
+For Credit Card Tips from the CFPB:
+  To learn more about factors to consider when applying for or using a credit card, visit the
+  Consumer Financial Protection Bureau (CFPB) website at https://www.consumerfinance.gov/credit-cards/.
+
+========================================================================================
+FEES SCHEDULE
+========================================================================================
+Annual Membership Fee:
+  None ($0.00).
+
+Transaction Fees:
+  - Balance Transfer Fee: Either $10.00 or 3.00% of the amount of each transfer, whichever
+    is greater.
+  - Cash Advance Fee: Either $10.00 or 5.00% of the amount of each cash advance, whichever
+    is greater.
+  - Foreign Transaction Fee: 3.00% of each transaction in U.S. dollars converted from foreign
+    currencies or processed outside the United States.
+
+Penalty Fees:
+  - Late Payment Fee: Up to $29.00 for the first violation; up to $40.00 for any subsequent
+    late payment occurring within the next six (6) billing cycles.
+  - Returned Payment Fee: Up to $39.00 per returned check or failed electronic debit.
+  - Over-the-Credit-Limit Fee: None ($0.00).
+
+3. CASH REWARDS PROGRAM RULES & REDEMPTIONS
+Cardholders earn cash back rewards on qualifying net purchases (purchases less returns and credits):
+- 3% Dining & Food Delivery: Earn 3% cash back on restaurant dining, fast casual establishments, cafes, bars, and licensed third-party food delivery services.
+- 2% Grocery Stores & Wholesale Clubs: Earn 2% cash back at eligible supermarket chains, local grocers, and national wholesale warehouse clubs on up to $6,000 in combined purchases per calendar year (1% thereafter).
+- 1% Everyday Purchases: Earn unlimited 1% cash back on all other retail, service, and recurring utility purchases.
+
+Rewards Terms:
+Cash back does not expire for the life of the account, provided the account remains open and in non-delinquent status. Cash rewards can be redeemed starting at a $25.00 minimum threshold via:
+1. Statement credit applied to your outstanding card balance.
+2. Direct electronic deposit into an active Meridian checking or savings account.
+3. Merchant gift cards and charitable donations through the Meridian Rewards Hub.
+
+4. LIABILITY PROTECTIONS & BILLING RIGHTS
+Under the Visa Zero Liability Policy, you are protected against unauthorized transactions when prompt notice is provided. You will not be held responsible for fraudulent charges provided you exercise reasonable care in safeguarding your card and PIN. Under the Fair Credit Billing Act, cardholders have sixty (60) days from the date of the billing statement containing an alleged error to submit a written dispute notice to:
+Meridian Trust & Savings Bank
+Attn: Card Dispute Operations, Suite 400
+100 Meridian Financial Parkway, Charlotte, NC 28202
+
+5. CARD ACTIVATION & DIGITAL INTEGRATION
+Upon receiving your physical card:
+1. Mobile App Activation: Open the Meridian Mobile Banking application, navigate to 'Card Services', select 'Activate New Card', and scan or enter your 16-digit card number and CVV.
+2. Online Banking: Log in at meridianbank.com/cards/activate and follow on-screen verification prompts.
+3. Automated Phone Line: Call toll-free 1-800-555-MTSB (6872) from the primary phone number associated with your bank profile.
+4. Digital Wallet Provisioning: Instantly link your card to Apple Pay, Google Pay, or Samsung Pay directly from the mobile app for tokenized contactless payments.

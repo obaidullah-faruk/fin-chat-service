@@ -1,0 +1,89 @@
+MERIDIAN TRUST & SAVINGS BANK
+RESIDENTIAL MORTGAGE & REFINANCING RATE CARD
+Effective Date: November 1, 2026 | Last Updated: November 15, 2026
+Headquarters: 100 Meridian Plaza, Charlotte, NC 28202 | Equal Housing Lender | NMLS ID: 481920
+
+================================================================================
+1. PRICING BASIS & GENERAL UNDERWRITING CRITERIA
+================================================================================
+Rates and APRs published herein represent Meridian Trust & Savings Bank standard retail mortgage pricing for owner-occupied, single-family primary residences. Quotes assume a purchase transaction or rate-and-term refinance with a representative credit score of 740+, an 80% Loan-to-Value (LTV) ratio, and a standard 45-day rate lock period.
+
+All mortgage loans are subject to full underwriting approval, verifiable income documentation, asset verification, clear title, and acceptable appraisal. Actual rates may vary based upon credit score, debt-to-income (DTI) ratio, property type, occupancy status, and loan amount.
+
+Conforming Loan Limit: $766,550.00 for single-unit properties in standard counties ($1,149,825.00 in designated high-cost statutory areas).
+Jumbo Loans: Mortgage loan balances exceeding conforming statutory limits up to $3,000,000.00.
+
+================================================================================
+2. CONFORMING RESIDENTIAL MORTGAGES (FIXED & ADJUSTABLE)
+================================================================================
+Conventional mortgage products backed by Fannie Mae and Freddie Mac underwriting guidelines.
+
+Conforming Rate Table:
+------------------------------------------------------------------------------------------------------------------
+Product Program              Interest Rate    Discount Points    APR*      Monthly P&I per $100k    Max LTV Ratio
+------------------------------------------------------------------------------------------------------------------
+30-Year Fixed Conforming     6.375%           0.625              6.492%    $623.77                  80% (95% w/PMI)
+20-Year Fixed Conforming     6.125%           0.500              6.248%    $723.40                  80% (95% w/PMI)
+15-Year Fixed Conforming     5.750%           0.500              5.910%    $830.41                  80% (90% w/PMI)
+10-Year Fixed Conforming     5.500%           0.375              5.688%    $1,085.26                80% (90% w/PMI)
+5/1 ARM Conforming**         5.625%           0.250              6.780%    $575.66                  80% (90% w/PMI)
+7/1 ARM Conforming**         5.875%           0.375              6.840%    $591.85                  80% (90% w/PMI)
+------------------------------------------------------------------------------------------------------------------
+*APR (Annual Percentage Rate) calculations incorporate interest rate, discount points, lender processing and underwriting fees ($1,295.00), appraisal, tax service, and prepaid finance charges.
+**Adjustable Rate Mortgage (ARM) Details:
+- 5/1 ARM: Interest rate is fixed for the initial 60 months (5 years) and adjusts annually thereafter.
+- 7/1 ARM: Interest rate is fixed for the initial 84 months (7 years) and adjusts annually thereafter.
+- Reference Index: 30-Day Average SOFR (Secured Overnight Financing Rate).
+- Margin: 2.750% added to the index at each adjustment period.
+- Rate Adjustment Caps: 2/2/5 structure (Initial cap: max 2.0% adjustment at first change; Periodic cap: max 2.0% annual adjustment; Lifetime cap: max 5.0% above initial note rate). Minimum floor rate equals margin (2.750%).
+
+================================================================================
+3. JUMBO MORTGAGES (PORTFOLIO RESIDENTIAL LENDING)
+================================================================================
+Tailored financing for luxury properties and high-net-worth borrowers requiring non-conforming balances from $766,551.00 up to $3,000,000.00.
+
+Jumbo Mortgage Rate Table:
+------------------------------------------------------------------------------------------------------------------
+Product Program              Interest Rate    Discount Points    APR*      Monthly P&I per $100k    Max LTV Ratio
+------------------------------------------------------------------------------------------------------------------
+30-Year Fixed Jumbo          6.750%           0.750              6.845%    $648.60                  75% (80% reserve)
+15-Year Fixed Jumbo          6.125%           0.625              6.240%    $850.56                  75% (80% reserve)
+7/1 ARM Jumbo                6.250%           0.500              7.125%    $615.72                  80% LTV
+10/1 ARM Jumbo               6.500%           0.500              7.195%    $632.07                  80% LTV
+------------------------------------------------------------------------------------------------------------------
+Jumbo Underwriting Standards:
+- Minimum FICO score: 720.
+- Maximum Debt-to-Income (DTI) ratio: 43%.
+- Post-Closing Liquid Asset Reserves: 6 to 12 months of Principal, Interest, Taxes, and Insurance (PITI) required in verifiable liquid accounts.
+
+================================================================================
+4. REFINANCING OPTIONS: RATE-AND-TERM VS. CASH-OUT
+================================================================================
+1. Rate-and-Term Refinance:
+   - Designed to lower monthly payments, shorten term duration, or convert an adjustable-rate mortgage to a predictable fixed rate.
+   - Pricing: Identical to the purchase rate tables above.
+   - Maximum LTV: 80% without Private Mortgage Insurance (up to 95% with standard PMI).
+
+2. Cash-Out Refinance:
+   - Enables homeowners to leverage home equity for debt consolidation, home renovation, or investment purposes.
+   - Pricing Adjustment: +0.375% added to the base interest rate, or 0.750 points loan-level price adjustment (LLPA).
+   - Maximum LTV: 75% for single-family primary residences (70% for 2-4 unit properties).
+   - Maximum Cash-Out Proceeds: $350,000 on conforming loans ($750,000 on jumbo loans).
+
+================================================================================
+5. RATE LOCK POLICIES & FLOAT-DOWN AGREEMENT
+================================================================================
+- 30-Day Rate Lock: Complimentary upon full loan application submission and initial document verification.
+- 45-Day Rate Lock: Standard default lock period with no fee.
+- 60-Day Rate Lock: Available for a 0.125% fee (credited back to borrower at closing).
+- 90-Day New Construction Lock: 0.25% upfront fee, refundable at closing.
+- MTSB Float-Down Feature: If prevailing market interest rates on the locked product drop by 0.25% or more at least 10 business days prior to closing, the borrower may execute a one-time float-down option to the current market rate for an administrative fee of $250.00.
+
+================================================================================
+6. CLOSING COSTS, ESCROWS & SERVICING FEES
+================================================================================
+- Lender Processing & Underwriting Fee: $1,295.00 flat fee.
+- Appraisal Fee: $550.00 - $750.00 (standard single-family; jumbo or complex properties higher).
+- Tax Service & Flood Certification Fee: $85.00.
+- Escrow Account: Required on all loans exceeding 80% LTV for real estate taxes and homeowner's insurance. Optional for conventional loans under 80% LTV (escrow waiver fee: 0.125% of loan amount).
+- Private Mortgage Insurance (PMI): Required on conventional loans with LTV exceeding 80%. Automatically cancelled at 78% LTV per the Homeowners Protection Act of 1998.

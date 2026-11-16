@@ -54,7 +54,7 @@ from security.authorization import (
     is_tool_allowed,
 )
 
-IntentLabel = Literal["accounts", "transactions", "service", "greeting", "unknown"]
+IntentLabel = Literal["accounts", "transactions", "service", "knowledge", "greeting", "unknown"]
 
 _INTENT_SYSTEM_PROMPT = """You are the routing coordinator for FinChat, an enterprise banking assistant.
 Your only job is to classify the user's message into one of these intents based on the conversation context:
@@ -62,6 +62,7 @@ Your only job is to classify the user's message into one of these intents based 
 - "accounts": personal balance inquiry, account lookups by number/name (e.g., FC1000000001), account status/details, USD endorsement info, bank-wide institutional liquidity and operational metrics/aggregates, or explanations of account concepts.
 - "transactions": personal transaction history, specific transaction lookups by reference ID (e.g., TXN-5E04875B25B1), deposits, withdrawals, transfers, account statements, transaction channels (e.g. Branch Teller, ATM, Online, POS), payment types, or follow-up explanations and clarifications regarding previously retrieved transactions or banking transaction terms.
 - "service": cheque book requests, customer 360 profile lookups by name/username, pending approval review queries (cheques, endorsements), KYC status verification, change/update of address, general customer service workflows or follow-ups.
+- "knowledge": inquiries about bank policies (overdraft privilege, dormancy, privacy, AML, dispute resolution, fraud rules), interest rates & lending schedules (savings APY tiers, CD ladder rates, mortgage rates, auto loans, personal loans), credit and debit card features & packages (Cash Rewards, Altitude Elite, debit limits, Schumer box disclosures, annual fees, rewards), promotional marketing campaigns & offers (welcome bonuses, promotional CDs, intro APR balance transfers, HELOC spring discount).
 - "unknown": out-of-scope non-banking requests (e.g., writing code, general trivia, math, poetry, non-banking questions).
 
 Important Context Guidelines:
@@ -309,6 +310,8 @@ def build_coordinator_graph(
             return "transaction_agent"
         if intent == "service":
             return "service_agent"
+        if intent == "knowledge":
+            return "knowledge_agent"
         if intent == "greeting":
             return "greeting_reply"
         return "fallback_reply"
@@ -413,10 +416,96 @@ def build_coordinator_graph(
             ],
         }
 
+    async def knowledge_node(state: CoordinatorState) -> dict[str, Any]:
+        started = time.perf_counter()
+        user_text = _last_user_message_text(state["messages"])
+
+        if publisher is not None and hasattr(publisher, "publish_status"):
+            try:
+                await publisher.publish_status("retrieving", "Searching Meridian knowledge base...")
+            except Exception:
+                pass
+
+        try:
+            from knowledge.tools import search_bank_knowledge
+            retrieved_context = search_bank_knowledge.invoke({"query": user_text})
+        except Exception as exc:
+            logger.warning("Knowledge search error: %s", exc)
+            retrieved_context = "Knowledge base search temporarily unavailable."
+
+        system_prompt = (
+            "You are FinChat's Knowledge Specialist for Meridian Trust & Savings Bank (MTSB).\n"
+            "Your job is to answer the customer's questions about bank policies, interest rates, "
+            "credit and debit cards, and promotional offers based strictly on the retrieved official documentation below.\n\n"
+            f"{retrieved_context}\n\n"
+            "Rules:\n"
+            "1. Answer clearly, accurately, and professionally.\n"
+            "2. Always cite the relevant document name and section (e.g. 'According to the CD Ladder Rates Schedule (Section: Early Withdrawal Penalties)...').\n"
+            "3. Accurately report specific interest rates, APYs, fees, thresholds, and conditions.\n"
+            "4. If the retrieved documentation does not answer the question, state that clearly and advise the customer to speak with a representative."
+        )
+
+        dialogue: list[AnyMessage] = []
+        for m in state["messages"][-4:]:
+            msg_type = getattr(m, "type", "")
+            if msg_type in ("human", "ai") or isinstance(m, (HumanMessage, AIMessage)):
+                text = _extract_message_text(getattr(m, "content", ""))
+                if text:
+                    dialogue.append(
+                        HumanMessage(content=text)
+                        if msg_type == "human" or isinstance(m, HumanMessage)
+                        else AIMessage(content=text)
+                    )
+
+        prompt_tokens, completion_tokens = 0, 0
+        try:
+            response = await llm.ainvoke([
+                SystemMessage(content=system_prompt),
+                *dialogue,
+            ])
+            reply_text = _extract_message_text(getattr(response, "content", ""))
+            prompt_tokens, completion_tokens = _extract_token_usage(response)
+        except Exception as exc:
+            logger.error("Knowledge LLM synthesis failed: %s", exc)
+            reply_text = f"Based on Meridian documentation: {retrieved_context[:300]}..."
+
+        latency_ms = int((time.perf_counter() - started) * 1000)
+
+        if publisher is not None and hasattr(publisher, "publish_token"):
+            words = reply_text.split(" ")
+            for i, word in enumerate(words):
+                chunk = word if i == len(words) - 1 else word + " "
+                try:
+                    await publisher.publish_token(chunk)
+                except Exception:
+                    pass
+
+        return {
+            "reply": reply_text,
+            "tools_called": ["search_bank_knowledge"],
+            "llm_calls": [
+                LLMCallTelemetry(
+                    node_name="knowledge_agent",
+                    model_name=model_name,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    latency_ms=latency_ms,
+                )
+            ],
+            "traces": [
+                TraceTelemetry(
+                    agent_name="knowledge_agent",
+                    input_state={"query": user_text},
+                    output_state={"reply": reply_text, "tools_called": ["search_bank_knowledge"]},
+                )
+            ],
+        }
+
     graph = StateGraph(CoordinatorState)
     graph.add_node("classify_intent", classify_intent)
     graph.add_node("greeting_reply", greeting_reply)
     graph.add_node("fallback_reply", fallback_reply)
+    graph.add_node("knowledge_agent", knowledge_node)
 
     # Sub-agent nodes & tool nodes
     graph.add_node("accounts_agent", accounts_node)
@@ -439,12 +528,14 @@ def build_coordinator_graph(
             "accounts_agent": "accounts_agent",
             "transaction_agent": "transaction_agent",
             "service_agent": "service_agent",
+            "knowledge_agent": "knowledge_agent",
             "greeting_reply": "greeting_reply",
             "fallback_reply": "fallback_reply",
         },
     )
     graph.add_edge("greeting_reply", END)
     graph.add_edge("fallback_reply", END)
+    graph.add_edge("knowledge_agent", END)
 
     # Accounts sub-agent loop
     graph.add_conditional_edges(

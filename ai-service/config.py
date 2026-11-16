@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     transactions_mcp_url: str = Field(default="http://transactions-mcp:8003/mcp")
     service_mcp_url: str = Field(default="http://service-mcp:8004/mcp")
 
+    qdrant_url: str = Field(default="http://qdrant:6333")
+    knowledge_collection_name: str = Field(default="finchat_knowledge")
+    fastembed_model_name: str = Field(default="BAAI/bge-small-en-v1.5")
+
     gemini_api_key: str = Field(default="")
     gemini_model: str = Field(default="gemini-3.8-flash")
     gemini_temperature: float = Field(default=0.0, ge=0.0, le=2.0)

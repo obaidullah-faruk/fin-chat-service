@@ -1,0 +1,119 @@
+# Meridian Trust & Savings Bank: Account Dormancy, Escheatment & Unclaimed Property Guidelines
+
+MERIDIAN TRUST & SAVINGS BANK
+ACCOUNT DORMANCY, INACTIVITY, ESCHEATMENT,
+AND UNCLAIMED PROPERTY OPERATIONAL GUIDELINES
+Document ID: MTSB-POL-OPS-2026-03
+Effective Date: January 15, 2026 | Last Annual Board Review: November 4, 2025
+Governing Unit: Department of Deposit Operations & Regulatory Remittance
+
+================================================================================
+SECTION 1: PURPOSE AND REGULATORY FRAMEWORK
+================================================================================
+Meridian Trust & Savings Bank ("MTSB") establishes these Guidelines to govern the lifecycle of deposit accounts exhibiting sustained customer inactivity, to safeguard abandoned consumer funds against unauthorized access, and to ensure full compliance with multi-jurisdictional unclaimed property statutes and state escheatment mandates.
+
+Every state, the District of Columbia, and U.S. territories have enacted unclaimed property laws (commonly derived from the Uniform Unclaimed Property Act of 1995 or Revised Uniform Unclaimed Property Act of 2016 [RUUPA]). Under the doctrine established in Texas v. New Jersey, 379 U.S. 674 (1965), unclaimed funds escheat to the state of the owner's last known address shown on the Bank's records; if the address is unknown, funds escheat to the Bank's state of legal incorporation.
+
+================================================================================
+SECTION 2: ACCOUNT LIFECYCLE CLASSIFICATIONS
+================================================================================
+2.1 Active Status
+An account is classified as "Active" if there has been qualifying, customer-initiated activity or documented communication within the preceding twelve (12) consecutive months.
+
+2.2 Inactive Status (12 to 24 Months)
+An account transitions automatically to "Inactive" status when no qualifying customer-initiated transaction or verifiable contact has occurred for twelve (12) consecutive calendar months.
+- System Actions:
+  * Periodic account statements continue to generate and be delivered (electronically or via USPS).
+  * Routine monitoring flags the account to prevent unauthorized address changes or automated withdrawals.
+  * An automated Inactivity Notice is dispatched to the customer's last known mailing and email address informing them of the impending dormancy timeline.
+
+2.3 Dormant Status (24+ Months)
+An account transitions to "Dormant" status upon reaching the following thresholds of customer inactivity:
+- Demand Deposit Checking Accounts & NOW Accounts: Twenty-four (24) consecutive months without customer-initiated activity.
+- Savings Accounts & Money Market Deposit Accounts (MMDA): Thirty-six (36) consecutive months without customer-initiated activity.
+- Certificates of Deposit (CD): Matured CDs that auto-renewed without any customer inquiry, direction, or withdrawal for thirty-six (36) months following the initial maturity date.
+- Safe Deposit Boxes: Failure to pay annual box rental fees or access the box for thirty-six (36) to sixty (60) months (governed by state law).
+
+================================================================================
+SECTION 3: QUALIFYING CUSTOMER-INITIATED ACTIVITY
+================================================================================
+Under federal and state standards, only explicit, affirmative customer-initiated actions restart the dormancy and escheatment clock.
+
+3.1 Qualifying Actions (Resets Dormancy Clock to Zero):
+1. Financial Transactions:
+   - Customer deposit or withdrawal made at a branch teller counter, ATM, or via remote deposit capture (mobile check deposit).
+   - Inbound or outbound one-time ACH transfer initiated by the customer.
+   - Point-of-Sale (POS) debit card transaction authorized with PIN or signature.
+   - Negotiating (cashing or depositing) a dividend or interest check drawn on the account.
+2. Digital and Documented Inquiries:
+   - Authenticated login to MTSB Online Banking or Mobile Banking accompanied by account viewing or transaction activity.
+   - Written correspondence signed by the account owner referencing the specific account number.
+   - Authenticated telephonic communication with MTSB Customer Contact Center where customer identity is confirmed and documented in CRM session logs.
+   - Receipt of a signed response to a pre-dormancy or escheatment due diligence notice.
+3. Cross-Account Aggregation (Affiliated Accounts):
+   - Under RUUPA provisions, activity by the customer in another active account held at MTSB prevents dormancy in the inactive account, provided the Bank sends periodic account statements for both accounts to the same address, or the accounts are linked under a single primary Taxpayer Identification Number (SSN/ITIN).
+
+3.2 Non-Qualifying Actions (DO NOT Reset Dormancy Clock):
+- Automated system interest postings or dividend payments.
+- Automatic recurring monthly service charges or maintenance fee debits.
+- Unopened or returned bank mailings.
+- Inbound automatic ACH credits originating from third parties without customer intervention (e.g., automated tax refunds or stale pension deposits if unaccompanied by customer withdrawal).
+
+================================================================================
+SECTION 4: OPERATIONAL RESTRICTIONS ON DORMANT ACCOUNTS
+================================================================================
+Upon designation as "Dormant", the core banking platform automatically applies comprehensive administrative locks to protect account balances:
+1. Operational Restraints:
+   - Suspension of debit card point-of-sale and ATM cash withdrawal capabilities.
+   - Automatic suppression of outbound third-party ACH debits (flagged for manual review).
+   - Interception of incoming debit items to verify legitimacy and prevent account takeover (ATO).
+   - Suppression of paper statement mailings if two consecutive previous mailings were returned by USPS as Undeliverable / Return to Sender (RTS).
+2. Reactivation / Unfreezing Protocols:
+   - In-Person Branch Reactivation: Account owner presents unexpired government photo ID and executes a standard Reactivation Authorization Form.
+   - Remote Reactivation: For customers unable to visit a branch, reactivation requires:
+     a) Submission of a notarized Dormant Account Claim Form;
+     b) Copy of government-issued photo ID;
+     c) Verification through high-assurance multi-factor authentication or out-of-band video verification; and
+     d) Execution of a qualifying financial deposit or transfer.
+
+================================================================================
+SECTION 5: ESCHEATMENT TIMELINES & STATUTORY DUE DILIGENCE
+================================================================================
+5.1 State Dormancy Trigger Periods
+When an account remains in dormant status without customer contact for the statutory abandonment period prescribed by the state of the customer's last known address (typically 3 to 5 years):
+- Illinois (Primary Hub): 3 years of abandonment (765 ILCS 1026/ RUUPA).
+- California: 3 years of abandonment (Cal. Code Civ. Proc. § 1513).
+- New York: 3 years of abandonment (NY Aband. Prop. Law § 300).
+- Florida & Texas: 3 to 5 years depending on account type.
+- Delaware: 5 years for banking organizations (12 Del. C. § 1133).
+
+5.2 Mandatory Statutory Due Diligence Mailings
+States strictly mandate that financial institutions send formal Due Diligence Notices to the account holder prior to remitting funds to the state:
+- Timeline: Due diligence notices must be mailed not more than 180 days and not less than 60 days before filing the annual unclaimed property report.
+- Delivery Method: Sent via first-class mail (or certified mail for accounts with balances exceeding $1,000, depending on state law) to the owner's last known address.
+- Notice Requirements: The notice must clearly state:
+  * That the Bank holds unclaimed funds in the customer's name;
+  * The specific dollar balance and account number;
+  * That state law requires the Bank to remit (escheat) the funds to the State Treasurer / State Comptroller if the customer does not respond by the deadline date;
+  * Clear instructions on how the customer can preserve the account (e.g., signing and returning an enclosed response card, logging into online banking, or making a deposit).
+
+================================================================================
+SECTION 6: REPORTING, REMITTANCE & RECORDKEEPING
+================================================================================
+6.1 Annual State Remittance Cycles
+MTSB's Escheatment Compliance Unit adheres to the two primary national reporting cycles:
+- Spring Reporting States (e.g., CA, CT, FL, PA, TX): Cut-off date December 31; report and cash remittance filed between March 1 and May 1.
+- Fall Reporting States (e.g., IL, NY, OH, VA, WA): Cut-off date June 30; report and remittance filed between October 1 and November 1.
+
+6.2 Reporting Formats & Remittance Transmission
+- All reports are generated in the standardized National Association of Unclaimed Property Administrators (NAUPA II) encrypted electronic file format.
+- Funds are transferred to state treasury accounts via Fedwire or ACH credit accompanied by certified reporting manifests.
+
+6.3 Post-Escheatment Customer Claims
+Once funds have been legally escheated and remitted to the state treasury:
+- MTSB has no further liability for the funds pursuant to statutory indemnification provisions.
+- Customers seeking recovery must file a claim directly with the applicable State Unclaimed Property Division (e.g., via MissingMoney.com or state treasury portals).
+- MTSB Customer Care specialists provide the customer with the remittance date, state report reference number, and state portal URL to expedite fund reclamation.
+
+6.4 Record Retention
+In accordance with RUUPA Section 404 and state compliance guidelines, MTSB retains all records of abandoned accounts, due diligence mailings, returned postal envelopes, and state remittance reports for a minimum of ten (10) years following the reporting date.
