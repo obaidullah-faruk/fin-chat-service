@@ -110,6 +110,7 @@ FinChat includes an enterprise-grade Retrieval-Augmented Generation (RAG) system
 
 - **Vector Database**: Qdrant v1.20 (`:6333`, Web Dashboard at `http://localhost:6333/dashboard`).
 - **Embedding Engine**: FastEmbed (`BAAI/bge-small-en-v1.5`) running locally on CPU via ONNX Runtime with zero external API cost and 100% data privacy.
+- **Section-Aware Chunking Strategy**: Splits documents on semantic headers (`#`, `##`, `Section`, `ARTICLE`) with Markdown table guards to preserve rate and fee tables as atomic units, and prepends hierarchical metadata breadcrumbs (`Document`, `Category`, `Section`) to every chunk to maintain context during vector retrieval.
 - **Single Source of Truth**: Qdrant stores document metadata, chunks, and embeddings directly in payloads, keeping `bank-db` dedicated strictly to core transactional ledgers.
 - **Admin Management Panel**: Accessible to `admin` and `superadmin` at `http://localhost:5173/admin/knowledge-base` for document uploads (PDF, DOCX, TXT, MD, JSON), duplicate collision resolution, and local data syncing.
 - **AI Chat Knowledge Agent**: Users can ask questions about bank policies (overdraft privilege, dormancy, dispute resolution), interest rate tiers (savings APY, CD ladders, mortgage rates), credit/debit card portfolios, and promotional offers.
